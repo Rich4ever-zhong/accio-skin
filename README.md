@@ -53,6 +53,8 @@ cd accio-skin
 
 不想装也行：浏览器直接打开 `preview.html`，8 套 × 明暗都能点。它和注入器用的是同一份 token 生成逻辑。
 
+在线版：**https://rich4ever-zhong.github.io/accio-skin/preview.html**
+
 ```
 preview.html?theme=nebula&mode=dark            # 指定预设与明暗
 preview.html?theme=aurora&wall=40              # 叠一层壁纸
@@ -144,9 +146,13 @@ ACCIO1.q1YqU7Iy1FEqUbJSSs1NSi1S0lHKU7JSerJ35vPmNc9WzlSqBQA
 
 「复制分享链接」给的是 GitHub Pages 上的预览页，对方点开能先看效果再决定装不装：
 
-![分享页](docs/share-demo.png)
+```
+https://rich4ever-zhong.github.io/accio-skin/preview.html?share=ACCIO1.…
+```
 
-> 分享链接需要仓库开启 Pages（Settings → Pages → Source 选 `main` / 根目录）。没开也不影响分享码本身。
+![分享页](docs/share-live.png)
+
+> 分享链接用到仓库的 Pages（Settings → Pages → Source 选 `main` / 根目录）。没开也不影响分享码本身，贴字符串一样能用。
 
 ### 加一套自己的
 
