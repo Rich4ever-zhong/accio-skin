@@ -55,7 +55,7 @@ test('注入器的关键契约还在', () => {
   const src = read('injector.mjs');
   const must = [
     'const VERSION =',
-    'WALL_MIN',
+    'WALL_WARN',
     'ACCIO1.',
     "['ELECTRON_RUN_AS_NODE'",   // 必须剥掉这个环境变量
     'Page.addScriptToEvaluateOnNewDocument',

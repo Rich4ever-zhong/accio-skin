@@ -100,7 +100,7 @@ function findAccio() {
 
 // ---------- 注入到页面的运行时（自包含，仅依赖 payload） ----------
 function bootstrap(payload) {
-  const VERSION = 10;
+  const VERSION = 13;
   const STORAGE = 'accio.skin.v4';
   const STYLE_ID = '__accio_skin_style';
   const HOST_ID = '__accio_skin_host';
@@ -122,7 +122,7 @@ function bootstrap(payload) {
     theme: payload.def,
     off: false,
     accent: null,
-    wall: { type: 'none', value: '', opacity: 0.62, blur: 16 }
+    wall: { type: 'none', value: '', opacity: 0.62, blur: 8 }
   };
   try {
     const raw = localStorage.getItem(STORAGE);
@@ -152,16 +152,17 @@ function bootstrap(payload) {
 
   const wallpaperOn = () => !state.off && !!(state.wall && state.wall.type !== 'none' && state.wall.value);
 
-  // 壁纸会压低正文对比度：浅色主题下限 62%，深色主题下限 42%（低于此值正文开始发虚）
-  const WALL_MIN = { light: 0.62, dark: 0.42 };
+  // 浓度 = 面板不透明度。0 表示面板全透明（壁纸最清楚），但正文会糊。
+  // 不硬性夹取，只在低于提示线时提醒一次——要什么样的效果由使用者自己决定。
+  const WALL_WARN = { light: 0.55, dark: 0.40 };
   const wallOpacity = mode => {
-    const want = Number(state.wall.opacity) || 0.62;
-    return Math.min(1, Math.max(WALL_MIN[mode] || 0.42, want));
+    const want = Number(state.wall.opacity);
+    return Math.min(1, Math.max(0, Number.isFinite(want) ? want : 0.62));
   };
 
   const fade = (t, alpha) => {
     if (!wallpaperOn()) return t;
-    const pct = Math.round(Math.max(0.3, Math.min(1, alpha)) * 100);
+    const pct = Math.round(Math.min(1, Math.max(0, alpha)) * 100);
     const out = Object.assign({}, t);
     for (const k of ['background', 'bg-layout', 'bg-container', 'surface', 'layer-surface', 'bg-chip', 'muted', 'accent']) {
       if (out[k] && String(out[k]).startsWith('#')) out[k] = `color-mix(in srgb, ${out[k]} ${pct}%, transparent)`;
@@ -179,7 +180,8 @@ function bootstrap(payload) {
   // Accio 有相当一部分表面用的是 Tailwind 调色板（zinc / neutral / slate…），不读语义 token。
   // 把这几个中性色阶整体映射到主题自己的底色与文字色，换肤才能覆盖到那部分界面。
   function rampVars(mode) {
-    const t = tokensOf(mode);
+    // 注意：这里必须用未叠加壁纸透明度的原始 token，否则 mix() 会拿到 color-mix 字符串
+    const t = recolor(payload.themes[state.theme].tokens[mode], mode, state.accent);
     const dark = mode === 'dark';
     const bg = t['background'], ct = t['bg-container'], bd = t['border'],
       fg = t['text-primary'], s2 = t['text-secondary'], s3 = t['text-tertiary'];
@@ -208,9 +210,17 @@ function bootstrap(payload) {
       '900': fg,
       '950': fg
     };
+    // 壁纸模式下，承担「表面」的那几档也要跟着半透明，否则卡片仍是实心
+    const alpha = wallpaperOn() ? wallOpacity(mode) : 1;
+    const pct100 = Math.round(alpha * 100);
+    const surfaceSteps = dark ? ['700', '800', '900', '950'] : ['50', '100', '200', '300'];
+    const alphad = (hex, n) => (alpha < 1 && surfaceSteps.indexOf(n) !== -1)
+      ? `color-mix(in srgb, ${hex} ${pct100}%, transparent)`
+      : hex;
     let out = '';
     for (const n of Object.keys(r)) {
-      for (const fam of ['zinc', 'neutral', 'slate', 'gray', 'stone']) out += `--color-${fam}-${n}:${r[n]};`;
+      const v = alphad(r[n], n);
+      for (const fam of ['zinc', 'neutral', 'slate', 'gray', 'stone']) out += `--color-${fam}-${n}:${v};`;
     }
     return out;
   }
@@ -238,7 +248,9 @@ html,body{background-color:transparent !important}
   let styleEl = null;
   function ensureStyle() {
     if (!styleEl) {
-      styleEl = document.getElementById(STYLE_ID) || document.createElement('style');
+      // 版本升级后旧实例的 <style> 可能还在，先清干净，避免两份规则互相覆盖
+      document.querySelectorAll('#' + STYLE_ID).forEach(el => el.remove());
+      styleEl = document.createElement('style');
       styleEl.id = STYLE_ID;
     }
     if (!styleEl.isConnected) {
@@ -370,7 +382,7 @@ html,body{background-color:transparent !important}
       <div class="wgrid" id="wg"></div>
       <div class="field"><input type="text" id="wurl" placeholder="图片 URL 或本地路径"><button class="btn" id="wgo">用</button></div>
       <div class="field"><button class="btn" id="wfile">选本地图片</button><button class="btn" id="woff">关闭壁纸</button></div>
-      <div class="sl">浓度<input type="range" id="wop" min="45" max="100" step="1"><b id="wopv"></b></div>
+      <div class="sl">浓度<input type="range" id="wop" min="0" max="100" step="1"><b id="wopv"></b></div>
       <div class="sl">模糊<input type="range" id="wbl" min="0" max="30" step="1"><b id="wblv"></b></div>
     </div>
     <div class="pane" id="pane-pack">
@@ -448,7 +460,7 @@ html,body{background-color:transparent !important}
       const act = el.dataset.act;
       if (act === 'off') {
         state.off = true; state.accent = null;
-        state.wall = { type: 'none', value: '', opacity: 0.62, blur: 16 };
+        state.wall = { type: 'none', value: '', opacity: 0.62, blur: 8 };
         save(); render();
       } else if (act === 'theme') { state.off = false; state.theme = el.dataset.id; save(); render(); }
       else if (act === 'accent') { state.off = false; state.accent = el.dataset.v; save(); render(); }
@@ -497,9 +509,9 @@ html,body{background-color:transparent !important}
       state.wall.opacity = Number(e.target.value) / 100;
       save(); render();
       const dark = document.documentElement.classList.contains('dark');
-      const used = wallOpacity(dark ? 'dark' : 'light');
-      if (Math.abs(used - state.wall.opacity) > 0.005) {
-        toast((dark ? '深色' : '浅色') + '模式下浓度下限 ' + Math.round(used * 100) + '%，再低正文就糊了');
+      const warn = WALL_WARN[dark ? 'dark' : 'light'];
+      if (state.wall.opacity < warn) {
+        toast('浓度 ' + Math.round(state.wall.opacity * 100) + '%：壁纸更清楚，但文字会比较吃力');
       }
     });
     sr.getElementById('wbl').addEventListener('input', e => { state.wall.blur = Number(e.target.value); save(); render(); });
@@ -654,7 +666,7 @@ html,body{background-color:transparent !important}
     state.off = false;
     state.wall = pack.w
       ? { type: pack.w[0], value: pack.w[1], opacity: pack.w[2], blur: pack.w[3] }
-      : { type: 'none', value: '', opacity: 0.62, blur: 16 };
+      : { type: 'none', value: '', opacity: 0.62, blur: 8 };
     save(); render();
     return payload.themes[state.theme].name;
   }
@@ -761,7 +773,7 @@ html,body{background-color:transparent !important}
     setAccent: v => { state.off = false; state.accent = v || null; save(); render(); },
     setOff: () => {
       state.off = true; state.accent = null;
-      state.wall = { type: 'none', value: '', opacity: 0.62, blur: 16 };
+      state.wall = { type: 'none', value: '', opacity: 0.62, blur: 8 };
       save(); render();
     },
     setWall: (type, value, opacity, blur) => {
