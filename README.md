@@ -31,7 +31,7 @@ git clone https://github.com/Rich4ever-zhong/accio-skin.git
 cd accio-skin
 ```
 
-不想用 git？到 [Releases](https://github.com/Rich4ever-zhong/accio-skin/releases) 下 zip，解压后一样双击 。
+不想用 git？到 [Releases](https://github.com/Rich4ever-zhong/accio-skin/releases) 下 zip，解压后一样双击 `setup.cmd`。
 
 然后**双击 `setup.cmd`**。它会做两件事，都可以撤销：
 
