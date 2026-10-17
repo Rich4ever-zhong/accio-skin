@@ -220,6 +220,19 @@ body.shot .stage.wall .app{position:relative;z-index:1;background:transparent}
 .mp-sw{width:13px;height:13px;border-radius:4px;border:1px solid var(--color-border-strong-value);flex:none}
 .mp-ck{margin-left:auto;font-size:10px}
 .mp-ft{margin-top:5px;border-top:1px solid var(--color-border-value);padding-top:5px}
+
+/* ---------- 分享页卡片 ---------- */
+.sharecard{position:fixed;left:22px;bottom:22px;z-index:20;width:312px;padding:16px 18px;border-radius:16px;
+  background:#fff;border:1px solid var(--line);box-shadow:0 18px 44px -20px rgba(24,52,44,.45);
+  font:15px/1.55 var(--font);color:var(--text)}
+.sharecard .sc-name{font-size:17px;font-weight:500;margin-bottom:2px}
+.sharecard .sc-sub{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.sharecard ol{margin:0 0 12px;padding-left:18px;font-size:13px;color:var(--text)}
+.sharecard li{margin:3px 0}
+.sharecard .sc-btns{display:flex;gap:8px}
+.sharecard button{font:inherit;font-size:12.5px;padding:6px 14px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--text)}
+.sharecard button.pri{background:var(--primary-dark);border-color:var(--primary-dark);color:#fff}
 .foot{margin-top:22px;color:var(--muted);font-size:12px;line-height:1.7}
 .foot code{font-family:var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11.5px}
 </style>
@@ -464,7 +477,7 @@ const withWall = (tk, pct) => {
 
 function apply(){
   const p = PRESETS[cur];
-  let tk = build(p[mode], mode);
+  let tk = p.raw ? Object.assign({}, p.raw[mode]) : build(p[mode], mode);
   if (wallPct) tk = withWall(tk, wallPct);
   for (const k in tk) stage.style.setProperty('--color-' + k + '-value', tk[k]);
   document.getElementById('curName').textContent = p.name + ' · ' + p.en;
@@ -484,7 +497,7 @@ function renderTokens(tk){
 
 function renderList(){
   listEl.innerHTML = PRESETS.map((p,i)=>{
-    const a = p.dark;
+    const a = p.raw ? p.raw.dark : p.dark;
     return `<div class="item ${i===cur?'on':''}" data-i="${i}">
       <span class="sw" style="background:linear-gradient(150deg,${a.container} 0 52%,${a.layout} 52% 100%)"><i style="background:${a.primary}"></i></span>
       <span class="nm">${p.name}<em>${p.en} · ${p.desc}</em></span>
@@ -494,37 +507,7 @@ function renderList(){
 
 listEl.addEventListener('click', e=>{
   const it = e.target.closest('.item'); if(!it) return;
-  cur = +it.dataset.i; const Q = new URLSearchParams(location.search);
-if (Q.get('theme')) { const i = PRESETS.findIndex(x=>x.id===Q.get('theme')); if (i>=0) cur = i; }
-if (Q.get('mode')==='light' || Q.get('mode')==='dark') {
-  mode = Q.get('mode');
-  document.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on', x.dataset.mode===mode));
-  stage.dataset.mode = mode;
-}
-if (Q.get('wall')) {
-  wallPct = Number(Q.get('wall')) || 46;
-  stage.classList.add('wall');
-  stage.style.setProperty('--wall-img', Q.get('wallimg') || 'radial-gradient(circle at 28% 18%,#1d4f4a,#0a1b1e 62%)');
-}
-if (Q.get('shot')) document.body.classList.add('shot');
-if (Q.get('debug')) {
-  setTimeout(()=>{
-    const r = el => { const b = el.getBoundingClientRect(); return Math.round(b.width)+'x'+Math.round(b.height)+'@'+Math.round(b.top); };
-    const m = ['vh=' + window.innerHeight, 'stage=' + r(stage), 'app=' + r(stage.querySelector('.app')), 'wrap=' + r(document.querySelector('.wrap')), 'body=' + r(document.body)];
-    document.body.setAttribute('data-metrics', m.join(' | '));
-    document.title = m.join(' | ');
-  }, 400);
-}
-if (Q.get('panel')) {
-  const box = document.createElement('div');
-  box.className = 'mockpanel on';
-  box.innerHTML = '<div class="mp-tabs"><span class="on">皮肤</span><span>强调色</span><span>壁纸</span><span>包</span></div>'
-    + PRESETS.map((x,i)=>`<div class="mp-row ${i===cur?'on':''}"><span class="mp-sw" style="background:${x.dark.primary};border-color:${x.light.border}"></span><span>${x.name}</span><span class="mp-ck">${i===cur?'✓':''}</span></div>`).join('')
-    + '<div class="mp-ft"><div class="mp-row"><span class="mp-sw" style="background:linear-gradient(135deg,#fff 50%,#333 50%)"></span>还原官方外观<span class="mp-ck">✓</span></div></div>';
-  stage.appendChild(box);
-}
-
-renderList(); apply();
+  cur = +it.dataset.i; renderList(); apply();
 });
 
 document.querySelectorAll('.seg button').forEach(b=>{
@@ -560,6 +543,66 @@ document.getElementById('copyBtn').addEventListener('click', async ()=>{
   toast.classList.add('on'); setTimeout(()=>toast.classList.remove('on'), 2000);
 });
 
+// ---------- 分享码（与注入器同一套算法：deflate-raw + base64url） ----------
+function b64u(u8){ let s=''; for (let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function unb64u(str){ const t=str.replace(/-/g,'+').replace(/_/g,'/'); const bin=atob(t); const u=new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+async function inflate(u8){
+  const ds = new DecompressionStream('deflate-raw');
+  const w = ds.writable.getWriter(); w.write(u8); w.close();
+  return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
+}
+function copyText(t){
+  try { navigator.clipboard.writeText(t); }
+  catch(e){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+}
+
+async function loadShare(code){
+  let pack;
+  try {
+    pack = JSON.parse(await inflate(unb64u(String(code).trim().replace(/^ACCIO1\./, ''))));
+  } catch(e) {
+    document.body.classList.add('shot');
+    const bad = document.createElement('div');
+    bad.className = 'sharecard';
+    bad.innerHTML = '<div class="sc-name">分享码无效</div><div class="sc-sub">链接可能被截断了，让对方重新复制一次。</div>';
+    document.body.appendChild(bad);
+    return;
+  }
+
+  if (pack.k) {
+    PRESETS.push({ id:'__shared', name: pack.n || '分享的主题', en:'shared', desc:'来自分享码', raw: pack.k });
+    cur = PRESETS.length - 1;
+  } else {
+    const i = PRESETS.findIndex(x => x.id === pack.t);
+    if (i >= 0) cur = i;
+  }
+  if (pack.w) {
+    wallPct = Math.round((Number(pack.w[2]) || 0.6) * 100);
+    stage.classList.add('wall');
+    stage.style.setProperty('--wall-img', pack.w[1]);
+  }
+  document.body.classList.add('shot');
+  renderList(); apply();
+
+  const scope = new URLSearchParams(location.search).get('share') || '';
+  const box = document.createElement('div');
+  box.className = 'sharecard';
+  box.innerHTML = '<div class="sc-name">' + (pack.n || '分享的主题') + '</div>'
+    + '<div class="sc-sub">用 accio-skin 导入，就能得到同款皮肤</div>'
+    + '<ol><li>按 README 装好并启动托盘</li><li>打开 Accio，点右下角圆点</li><li>切到「包」页 → 粘贴分享码 → 导入</li></ol>'
+    + '<div class="sc-btns"><button class="pri" id="sccopy">复制分享码</button><button id="sctoggle">看明/暗</button></div>';
+  document.body.appendChild(box);
+  box.querySelector('#sccopy').onclick = () => {
+    copyText(scope);
+    box.querySelector('#sccopy').textContent = '已复制';
+  };
+  box.querySelector('#sctoggle').onclick = () => {
+    mode = mode === 'dark' ? 'light' : 'dark';
+    apply();
+    box.querySelector('#sctoggle').textContent = mode === 'dark' ? '看浅色' : '看深色';
+  };
+}
+
 const Q = new URLSearchParams(location.search);
 if (Q.get('theme')) { const i = PRESETS.findIndex(x=>x.id===Q.get('theme')); if (i>=0) cur = i; }
 if (Q.get('mode')==='light' || Q.get('mode')==='dark') {
@@ -573,6 +616,7 @@ if (Q.get('wall')) {
   stage.style.setProperty('--wall-img', Q.get('wallimg') || 'radial-gradient(circle at 28% 18%,#1d4f4a,#0a1b1e 62%)');
 }
 if (Q.get('shot')) document.body.classList.add('shot');
+if (Q.get('share')) { document.body.classList.add('shot'); loadShare(Q.get('share')); }
 if (Q.get('debug')) {
   setTimeout(()=>{
     const r = el => { const b = el.getBoundingClientRect(); return Math.round(b.width)+'x'+Math.round(b.height)+'@'+Math.round(b.top); };

@@ -5,6 +5,7 @@
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?style=flat-square)
 ![node](https://img.shields.io/badge/Node.js-%E2%89%A522-339933?style=flat-square)
 ![deps](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)
+![release](https://img.shields.io/github/v/release/Rich4ever-zhong/accio-skin?style=flat-square&color=4FAE94)
 ![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
 ![星云紫主题](docs/theme-nebula.png)
@@ -126,6 +127,26 @@ node injector.mjs --log=%TEMP%\a.log  # 同时写日志文件
 ```
 
 `wall.type` 可为 `none` / `gradient` / `url`（url 支持 http、本地路径、data URI）。
+
+### 分享码（最省事）
+
+不想传文件就用分享码。面板「包」页点「复制分享码」，得到一串字符：
+
+```
+ACCIO1.q1YqU7Iy1FEqUbJSSs1NSi1S0lHKU7JSerJ35vPmNc9WzlSqBQA
+```
+
+对方在同一页点「粘贴分享码导入」即生效。
+
+- 只换内置预设 → 码很短（上面这串 58 字符）
+- 带强调色 / 壁纸 / 自定义主题 → 会把最终 49×2 个 token 一起编码（约 1.3KB），保证两边**颜色完全一致**
+- 编码方式：JSON → `deflate-raw` → base64url，前缀 `ACCIO1.`，纯前端完成，不经过任何服务器
+
+「复制分享链接」给的是 GitHub Pages 上的预览页，对方点开能先看效果再决定装不装：
+
+![分享页](docs/share-demo.png)
+
+> 分享链接需要仓库开启 Pages（Settings → Pages → Source 选 `main` / 根目录）。没开也不影响分享码本身。
 
 ### 加一套自己的
 

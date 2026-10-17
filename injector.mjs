@@ -100,7 +100,7 @@ function findAccio() {
 
 // ---------- 注入到页面的运行时（自包含，仅依赖 payload） ----------
 function bootstrap(payload) {
-  const VERSION = 7;
+  const VERSION = 8;
   const STORAGE = 'accio.skin.v4';
   const STYLE_ID = '__accio_skin_style';
   const HOST_ID = '__accio_skin_host';
@@ -352,9 +352,11 @@ html,body{background-color:transparent !important}
       <div class="sl">模糊<input type="range" id="wbl" min="0" max="30" step="1"><b id="wblv"></b></div>
     </div>
     <div class="pane" id="pane-pack">
-      <div class="field"><button class="btn" id="exp">导出到剪贴板</button><button class="btn" id="dl">下载 json</button></div>
-      <div class="field"><button class="btn" id="imp">从剪贴板导入</button></div>
-      <div class="hint">主题包 = 皮肤 + 强调色 + 壁纸，可发给别人直接导入。</div>
+      <div class="field"><button class="btn" id="mkshare">复制分享码</button><button class="btn" id="mklink">复制分享链接</button></div>
+      <div class="field"><button class="btn" id="impshare">粘贴分享码导入</button></div>
+      <div class="field"><button class="btn" id="exp">导出 json 到剪贴板</button><button class="btn" id="imp">粘贴 json 导入</button></div>
+      <div class="field"><button class="btn" id="dl">下载 .json 文件</button></div>
+      <div class="hint">分享码最方便：一串字符，贴到微信/文档都能传。主题包 = 皮肤 + 强调色 + 壁纸。</div>
     </div>
     <div class="ft"><div class="row" data-act="off"><span class="sw" style="background:linear-gradient(135deg,#fff 50%,#333 50%)"></span>还原官方外观<span class="ck" style="opacity:1">✓</span></div></div>
   </div>
@@ -442,6 +444,23 @@ html,body{background-color:transparent !important}
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 3000);
     });
+    sr.getElementById('mkshare').addEventListener('click', () => {
+      makeShareCode()
+        .then(c => { copy(c); toast('分享码已复制（' + c.length + ' 字符）'); })
+        .catch(e => toast('生成失败：' + e.message));
+    });
+    sr.getElementById('mklink').addEventListener('click', () => {
+      makeShareCode()
+        .then(c => { copy(SHARE_BASE + '?share=' + encodeURIComponent(c)); toast('分享链接已复制'); })
+        .catch(e => toast('生成失败：' + e.message));
+    });
+    sr.getElementById('impshare').addEventListener('click', () => {
+      navigator.clipboard.readText()
+        .then(t => applyShareCode(t))
+        .then(n => toast('已导入「' + n + '」'))
+        .catch(e => toast('导入失败：' + e.message));
+    });
+
     sr.getElementById('imp').addEventListener('click', () => {
       navigator.clipboard.readText().then(txt => {
         try {
@@ -507,6 +526,68 @@ html,body{background-color:transparent !important}
     toastEl.style.opacity = '1';
     clearTimeout(toastT);
     toastT = setTimeout(() => { toastEl.style.opacity = '0'; }, 1600);
+  }
+
+  // -------- 分享码：deflate-raw + base64url，一串字符带走整套皮肤 --------
+  const BUILTIN = Object.keys(payload.themes);
+  const b64u = u8 => btoa(String.fromCharCode.apply(null, u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const unb64u = s => {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(s);
+    const u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  };
+  async function deflate(str) {
+    const cs = new CompressionStream('deflate-raw');
+    const w = cs.writable.getWriter();
+    w.write(new TextEncoder().encode(str));
+    w.close();
+    return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  }
+  async function inflate(u8) {
+    const ds = new DecompressionStream('deflate-raw');
+    const w = ds.writable.getWriter();
+    w.write(u8);
+    w.close();
+    return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
+  }
+
+  const SHARE_BASE = 'https://rich4ever-zhong.github.io/accio-skin/preview.html';
+  const rawTokens = mode => recolor(payload.themes[state.theme].tokens[mode], mode, state.accent);
+
+  async function makeShareCode() {
+    const custom = BUILTIN.indexOf(state.theme) === -1;
+    const pack = { v: 1, t: state.theme, n: payload.themes[state.theme].name };
+    if (state.accent) pack.a = state.accent;
+    const w = state.wall;
+    if (w && w.type !== 'none' && w.value) pack.w = [w.type, w.value, w.opacity, w.blur];
+    // 自定义主题或改了强调色时，把最终 token 一起带上，保证对方看到完全一致的颜色
+    if (custom || state.accent) pack.k = { light: rawTokens('light'), dark: rawTokens('dark') };
+    return 'ACCIO1.' + b64u(await deflate(JSON.stringify(pack)));
+  }
+
+  async function applyShareCode(code) {
+    const s = String(code || '').trim().replace(/\s+/g, '');
+    if (s.indexOf('ACCIO1.') !== 0) throw new Error('不是有效的分享码');
+    const pack = JSON.parse(await inflate(unb64u(s.slice(7))));
+    const id = '__shared';
+    if (pack.k) {
+      payload.themes[id] = { name: pack.n || '分享的主题', en: id, tokens: pack.k };
+      state.theme = id;
+      state.accent = null;           // token 里已经算过强调色，不能再叠加一次
+    } else if (payload.themes[pack.t]) {
+      state.theme = pack.t;
+      state.accent = pack.a || null;
+    } else {
+      throw new Error('分享码里的主题不认识');
+    }
+    state.off = false;
+    state.wall = pack.w
+      ? { type: pack.w[0], value: pack.w[1], opacity: pack.w[2], blur: pack.w[3] }
+      : { type: 'none', value: '', opacity: 0.62, blur: 16 };
+    save(); render();
+    return payload.themes[state.theme].name;
   }
 
   // -------- 主题包导入导出 --------
@@ -580,6 +661,8 @@ html,body{background-color:transparent !important}
     version: VERSION, payload, state,
     reapply: () => { try { render(); } catch (e) { } },
     setTheme: id => { if (payload.themes[id]) { state.off = false; state.theme = id; save(); render(); } },
+    makeCode: () => makeShareCode(),
+    applyCode: c => applyShareCode(c),
     setAccent: v => { state.off = false; state.accent = v || null; save(); render(); },
     setOff: () => {
       state.off = true; state.accent = null;
