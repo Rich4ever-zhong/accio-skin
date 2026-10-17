@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Accio Work 换肤 · 8 套预设挑色台</title>
+<style>
+:root{
+  --bg:#f7faf8; --surface:#fff; --surface-2:#f1f7f4; --text:#20302b; --muted:#6f7e79;
+  --line:#e5ece8; --primary:#4fae94; --primary-dark:#277b68; --primary-soft:#dff5ec;
+  --peach:#f7a7ae; --peach-soft:#fdebed; --yellow:#f4c95d; --danger:#d95c5c;
+  --radius:18px;
+  --font: Inter,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font);
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1380px;margin:0 auto;padding:30px 26px 60px}
+
+/* ---------- header ---------- */
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px}
+h1{font-size:23px;font-weight:500;letter-spacing:-.2px;margin:0 0 6px}
+.sub{color:var(--muted);font-size:13px;margin:0;max-width:640px}
+.evidence{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.tag b{color:var(--primary-dark);font-weight:500}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:1000px){ .grid{grid-template-columns:1fr} }
+
+/* ---------- preset list ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.panel-h{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.panel-h span{font-size:13px;color:var(--muted)}
+.list{padding:8px}
+.item{display:flex;gap:11px;align-items:center;padding:9px 10px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:background .14s,border-color .14s}
+.item:hover{background:var(--surface-2)}
+.item.on{background:var(--primary-soft);border-color:#bfe9db}
+.sw{width:34px;height:34px;border-radius:10px;flex:none;position:relative;border:1px solid rgba(0,0,0,.10);overflow:hidden}
+.sw i{position:absolute;right:5px;bottom:5px;width:11px;height:11px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.nm{font-size:13.5px;line-height:1.25}
+.nm em{display:block;font-style:normal;font-size:11.5px;color:var(--muted);letter-spacing:.2px}
+.item.on .nm{font-weight:500}
+
+/* ---------- toolbar ---------- */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{font:inherit;font-size:13px;padding:5px 14px;border:0;background:transparent;color:var(--muted);border-radius:999px;cursor:pointer}
+.seg button.on{background:var(--text);color:#fff}
+.acts{display:flex;gap:8px;align-items:center}
+.btn{font:inherit;font-size:13px;padding:7px 15px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;transition:.14s}
+.btn:hover{border-color:#cfe0d9}
+.btn.primary{background:var(--primary-dark);border-color:var(--primary-dark);color:#fff}
+.btn.primary:hover{background:#1f6656}
+.cur{font-size:12.5px;color:var(--muted)}
+.cur b{color:var(--text);font-weight:500}
+
+/* ---------- stage (real Accio token layer) ---------- */
+.stage{
+  --radius-m:10px;
+  border-radius:var(--radius);overflow:hidden;border:1px solid rgba(0,0,0,.10);
+  height:560px;box-shadow:0 18px 42px -28px rgba(24,52,44,.45);
+  /* 第二层：派生 token，结构与 Accio 一致 */
+  --color-primary:var(--color-primary-value);
+  --color-primary-dark:var(--color-primary-dark-value);
+  --color-primary-foreground:var(--color-primary-foreground-value);
+  --color-primary-bg:var(--color-primary-bg-value);
+  --color-background:var(--color-background-value);
+  --color-bg-layout:var(--color-bg-layout-value);
+  --color-bg-container:var(--color-bg-container-value);
+  --color-bg-chip:var(--color-bg-chip-value);
+  --color-foreground:var(--color-foreground-value);
+  --color-text-primary:var(--color-text-primary-value);
+  --color-text-secondary:var(--color-text-secondary-value);
+  --color-text-tertiary:var(--color-text-tertiary-value);
+  --color-input-placeholder:var(--color-input-placeholder-value);
+  --color-layer-surface:var(--color-layer-surface-value);
+  --color-layer-background-dim:var(--color-layer-background-dim-value);
+  --color-layer-container-dimer:var(--color-layer-container-dimer-value);
+  --color-sidebar-item-hover:var(--color-sidebar-item-hover-value);
+  --color-sidebar-nav-foreground:var(--color-sidebar-nav-foreground-value);
+  --color-sidebar-nav-active-foreground:var(--color-sidebar-nav-active-foreground-value);
+  --color-sidebar-session-title:var(--color-sidebar-session-title-value);
+  --color-sidebar-session-title-archived:var(--color-sidebar-session-title-archived-value);
+  --color-destructive:var(--color-destructive-value);
+  --color-success:var(--color-success-value);
+  --color-warning:var(--color-warning-value);
+  --color-info:var(--color-info-value);
+  --color-badge-success-text:var(--color-badge-success-text-value);
+  --color-badge-success-bg:var(--color-badge-success-bg-value);
+  --color-badge-warning-text:var(--color-badge-warning-text-value);
+  --color-badge-warning-bg:var(--color-badge-warning-bg-value);
+  --color-chat-cta-bg:var(--color-chat-cta-bg-value);
+  --color-surface:var(--color-surface-value);
+  --color-muted:var(--color-muted-value);
+  --color-muted-foreground:var(--color-muted-foreground-value);
+  --color-border:var(--color-border-value);
+  --color-border-subtle:var(--color-border-subtle-value);
+  --color-border-divider:var(--color-border-divider-value);
+  --color-border-strong:var(--color-border-strong-value);
+  --color-accent:var(--color-accent-value);
+  --color-accent-foreground:var(--color-accent-foreground-value);
+}
+.app{height:100%;display:grid;grid-template-columns:214px minmax(0,1fr) 208px;background:var(--color-background);color:var(--color-text-primary);font-size:12.5px;line-height:1.5}
+@media (max-width:1180px){ .app{grid-template-columns:200px minmax(0,1fr)} .rail{display:none} }
+
+/* sidebar */
+.side{background:var(--color-bg-layout);border-right:1px solid var(--color-border-divider);display:flex;flex-direction:column;padding:12px 10px;gap:9px;min-width:0}
+.brand{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--color-text-primary);padding:2px 4px}
+.mark{width:16px;height:16px;border-radius:5px;background:var(--color-primary);flex:none;position:relative}
+.mark::after{content:"";position:absolute;inset:4px 4px auto 4px;height:3px;border-radius:2px;background:var(--color-primary-foreground);opacity:.85}
+.newchat{display:flex;align-items:center;gap:6px;background:var(--color-background);border:1px solid var(--color-border);color:var(--color-text-primary);border-radius:8px;padding:7px 9px;font-size:12.5px;font-weight:500}
+.newchat s{text-decoration:none;color:var(--color-primary);font-size:14px;line-height:1}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav-i{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;color:var(--color-sidebar-nav-foreground);font-size:12.5px}
+.nav-i.on{background:var(--color-sidebar-item-hover);color:var(--color-sidebar-nav-active-foreground);font-weight:500}
+.nav-i u{text-decoration:none;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.45}
+.sep{height:1px;background:var(--color-border-divider);margin:3px 2px}
+.sec{font-size:11px;color:var(--color-text-tertiary);padding:3px 8px;letter-spacing:.3px}
+.sess{padding:6px 8px;border-radius:7px;color:var(--color-sidebar-session-title);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.sess.on{background:var(--color-sidebar-item-hover);color:var(--color-text-primary);font-weight:500}
+.sess.old{color:var(--color-sidebar-session-title-archived)}
+.side-foot{margin-top:auto;display:flex;align-items:center;gap:7px;padding:7px 6px;border-top:1px solid var(--color-border-divider);color:var(--color-text-secondary);font-size:12px}
+.avatar{width:19px;height:19px;border-radius:50%;background:var(--color-accent);color:var(--color-accent-foreground);display:grid;place-items:center;font-size:10.5px;font-weight:500;border:1px solid var(--color-border)}
+.pillsoft{margin-left:auto;font-size:10.5px;padding:1px 6px;border-radius:999px;background:var(--color-badge-success-bg);color:var(--color-badge-success-text)}
+
+/* main */
+.main{display:flex;flex-direction:column;min-width:0;background:var(--color-background)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--color-border-divider)}
+.crumb{font-size:12.5px;color:var(--color-text-primary);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-r{display:flex;gap:7px;align-items:center;flex:none}
+.model{font-size:11.5px;color:var(--color-text-secondary);background:var(--color-bg-chip);border-radius:999px;padding:3px 8px}
+.ghost{font-size:11.5px;color:var(--color-text-secondary);border:1px solid var(--color-border);border-radius:7px;padding:3px 8px}
+.chat{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:13px}
+.msg.user{display:flex;justify-content:flex-end}
+.bubble{max-width:82%;background:var(--color-primary);color:var(--color-primary-foreground);padding:8px 12px;border-radius:12px 12px 4px 12px;font-size:12.5px}
+.bot-head{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary);margin-bottom:6px}
+.ava{width:17px;height:17px;border-radius:6px;background:var(--color-primary-bg);color:var(--color-primary);display:grid;place-items:center;font-size:10px;font-weight:500}
+.toolchip{display:flex;align-items:center;gap:7px;background:var(--color-layer-surface);border:1px solid var(--color-border-subtle);border-radius:8px;padding:6px 9px;font-size:11.5px;color:var(--color-text-secondary);margin-bottom:8px}
+.toolchip i{width:6px;height:6px;border-radius:50%;background:var(--color-success);flex:none}
+.toolchip b{margin-left:auto;color:var(--color-primary);font-weight:500;font-size:11px}
+.bot h4{font-size:12.5px;margin:0 0 4px;font-weight:500;color:var(--color-text-primary)}
+.bot p{margin:0 0 7px;color:var(--color-text-secondary);font-size:12px}
+.bot table{width:100%;border-collapse:collapse;font-size:11.5px;margin:0 0 8px}
+.bot th{text-align:left;font-weight:500;color:var(--color-text-secondary);padding:5px 6px;background:var(--color-layer-surface);border-bottom:1px solid var(--color-border-divider);font-size:11px}
+.bot td{padding:5px 6px;color:var(--color-text-primary);border-bottom:1px solid var(--color-border-subtle)}
+.bot td.n{color:var(--color-primary);font-weight:500}
+.bot ul{margin:0 0 9px;padding-left:15px;color:var(--color-text-secondary);font-size:11.5px}
+.bot li{margin:2px 0}
+.acts-row{display:flex;gap:6px}
+.b-ghost{font-size:11.5px;padding:4px 9px;border-radius:7px;border:1px solid var(--color-border);color:var(--color-text-secondary);background:var(--color-background)}
+.b-primary{font-size:11.5px;padding:4px 9px;border-radius:7px;background:var(--color-primary);color:var(--color-primary-foreground);font-weight:500}
+.composer{padding:10px 16px 14px;border-top:1px solid var(--color-border-divider);background:var(--color-background)}
+.comp{border:1px solid var(--color-border);border-radius:11px;padding:9px 10px;background:var(--color-background)}
+.comp .ph{color:var(--color-input-placeholder);font-size:12px;min-height:24px}
+.comp .rowbar{display:flex;align-items:center;gap:6px;margin-top:6px}
+.mini{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--color-muted);color:var(--color-muted-foreground);border:1px solid var(--color-border-subtle)}
+.send{margin-left:auto;width:22px;height:22px;border-radius:7px;background:var(--color-primary);color:var(--color-primary-foreground);display:grid;place-items:center;font-size:12px;font-weight:500}
+
+/* rail */
+.rail{border-left:1px solid var(--color-border-divider);background:var(--color-bg-layout);padding:12px 10px;display:flex;flex-direction:column;gap:9px}
+.card{background:var(--color-bg-container);border:1px solid var(--color-border-subtle);border-radius:9px;padding:9px 10px}
+.card-t{font-size:11.5px;color:var(--color-text-secondary);margin-bottom:7px}
+.row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--color-text-secondary);padding:2px 0}
+.row b{color:var(--color-text-primary);font-weight:500}
+.pbar{height:5px;border-radius:3px;background:var(--color-muted);margin:8px 0 5px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--color-primary);border-radius:3px}
+.hint{font-size:10.5px;color:var(--color-text-tertiary)}
+.big{font-size:19px;font-weight:500;color:var(--color-text-primary);letter-spacing:-.4px;line-height:1.2}
+.soft{background:var(--color-primary-bg);border-color:transparent}
+.soft .big{color:var(--color-primary)}
+.soft .hint{color:var(--color-primary)}
+.banner{background:var(--color-badge-warning-bg);border-color:transparent}
+.banner .card-t{color:var(--color-badge-warning-text)}
+.banner .hint{color:var(--color-badge-warning-text);opacity:.85}
+
+/* ---------- tokens table ---------- */
+.tokens{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.tk-h{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+.tk-h b{font-size:13.5px;font-weight:500}
+.tk-h span{font-size:12px;color:var(--muted)}
+.tk-body{display:none;padding:10px 14px 16px;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:2px 14px}
+.tk-body.open{display:grid}
+.tk{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:3px 0;font-family:var(--mono);color:var(--muted);min-width:0}
+.tk .n{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk .v{margin-left:auto;flex:none;color:var(--muted)}
+.tk .d{width:10px;height:10px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.12)}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--text);color:#fff;font-size:13px;padding:9px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:.22s;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+/* ---------- 截图模式（headless 出图用，不参与交互） ---------- */
+body.shot{overflow:hidden;background:#05070a}
+body.shot .head,body.shot .panel,body.shot .bar,body.shot .tokens,body.shot .foot{display:none!important}
+body.shot .wrap{max-width:none;padding:0;margin:0}
+body.shot .grid{display:block}
+body.shot html,body.shot{height:100%}
+body.shot .wrap{min-height:0}
+body.shot .stage{height:100vh;min-height:100vh;border:0;border-radius:0;box-shadow:none}
+body.shot .stage .app{height:100%;min-height:100%}
+body.shot .stage.wall::before{content:"";position:absolute;inset:-60px;z-index:0;background-image:var(--wall-img,none);background-size:cover;background-position:center;filter:blur(10px) saturate(1.06)}
+body.shot .stage.wall .app{position:relative;z-index:1;background:transparent}
+.stage{position:relative}
+
+/* ---------- 面板示意图（对应真机右下角那个控制面板） ---------- */
+.mockpanel{position:absolute;right:14px;bottom:14px;z-index:5;width:238px;border-radius:13px;padding:8px;
+  background:var(--color-bg-container-value);border:1px solid var(--color-border-value);color:var(--color-text-primary-value);
+  box-shadow:0 18px 42px -18px rgba(0,0,0,.5);display:none}
+.mockpanel.on{display:block}
+.mp-tabs{display:flex;gap:2px;padding:2px;margin-bottom:6px;background:var(--color-muted-value);border-radius:8px}
+.mp-tabs span{flex:1;text-align:center;font-size:11.5px;padding:4px 0;border-radius:6px;opacity:.62}
+.mp-tabs span.on{background:var(--color-bg-container-value);opacity:1;font-weight:500}
+.mp-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;font-size:12.5px}
+.mp-row.on{background:var(--color-muted-value);font-weight:500}
+.mp-sw{width:13px;height:13px;border-radius:4px;border:1px solid var(--color-border-strong-value);flex:none}
+.mp-ck{margin-left:auto;font-size:10px}
+.mp-ft{margin-top:5px;border-top:1px solid var(--color-border-value);padding-top:5px}
+.foot{margin-top:22px;color:var(--muted);font-size:12px;line-height:1.7}
+.foot code{font-family:var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div>
+      <h1>Accio Work 换肤 · 8 套预设挑色台</h1>
+      <p class="sub">每套预设都直接覆盖 Accio 真实的 <b>--color-*-value</b> token 层，右侧预览用的是 Accio 同一套两层派生结构 —— 你现在看到的效果，就是注入后真机的效果。</p>
+      <div class="evidence">
+        <span class="tag">来源 <b>Accio 0.34.4</b> index-CWe6DKav.css</span>
+        <span class="tag">token <b>54</b> 个 -value 变量 · 其中 <b>49</b> 个颜色</span>
+        <span class="tag">浅色 / 深色 <b>各一套</b></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <div class="panel-h"><b style="font-size:13.5px;font-weight:500">选一套</b><span>8 套</span></div>
+        <div class="list" id="list"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="bar">
+        <div class="cur">当前：<b id="curName">—</b> · <span id="curMode">深色</span> · token <span id="curCount">0</span>/49</div>
+        <div class="acts">
+          <div class="seg">
+            <button data-mode="light">浅色</button>
+            <button data-mode="dark" class="on">深色</button>
+          </div>
+          <button class="btn" id="copyBtn">复制主题包 JSON</button>
+        </div>
+      </div>
+
+      <div class="stage" id="stage" data-mode="dark">
+        <div class="app">
+          <aside class="side">
+            <div class="brand"><span class="mark"></span>Accio Work</div>
+            <div class="newchat"><s>＋</s>新对话</div>
+            <div class="nav">
+              <div class="nav-i on"><u></u>Agent Hub</div>
+              <div class="nav-i"><u></u>自动化</div>
+              <div class="nav-i"><u></u>技能</div>
+              <div class="nav-i"><u></u>插件</div>
+            </div>
+            <div class="sep"></div>
+            <div class="sec">今天</div>
+            <div class="sess on">定制扑克牌报价梯度</div>
+            <div class="sess">供应商比对 · 3 家</div>
+            <div class="sess">详情页卖点重写</div>
+            <div class="sec">昨天</div>
+            <div class="sess old">亚马逊类目趋势</div>
+            <div class="sess old">询盘话术打磨</div>
+            <div class="side-foot"><span class="avatar">R</span>Rich4ever<span class="pillsoft">Pro</span></div>
+          </aside>
+
+          <main class="main">
+            <div class="topbar">
+              <div class="crumb">定制扑克牌报价梯度</div>
+              <div class="top-r"><span class="model">Claude · 4.5</span><span class="ghost">分享</span></div>
+            </div>
+            <div class="chat">
+              <div class="msg user"><div class="bubble">帮我把这款定制扑克牌的报价梯度算一下，目标毛利 35%，FOB 宁波。</div></div>
+              <div class="bot">
+                <div class="bot-head"><span class="ava">A</span>Accio · 已调用 2 个技能</div>
+                <div class="toolchip"><i></i>供应商检索 · 1.5M 家<b>查看 3 步</b></div>
+                <h4>报价梯度（FOB 宁波，1000 副起）</h4>
+                <p>按 300g 铜版纸 + 双面覆膜 + 定制盒估算，已计入 13% 出口退税：</p>
+                <table>
+                  <tr><th>数量</th><th>单价</th><th>毛利率</th></tr>
+                  <tr><td>1,000 副</td><td class="n">$1.86</td><td>35.2%</td></tr>
+                  <tr><td>5,000 副</td><td class="n">$1.58</td><td>35.8%</td></tr>
+                  <tr><td>20,000 副</td><td class="n">$1.42</td><td>36.1%</td></tr>
+                </table>
+                <ul>
+                  <li>纸价按当前 6,800 元/吨，波动 ±5% 会影响单副成本 $0.03</li>
+                  <li>定制盒起订 3,000 个，低于此数走标准盒可再压 $0.06</li>
+                </ul>
+                <div class="acts-row"><span class="b-ghost">生成报价单</span><span class="b-primary">导出 Excel</span></div>
+              </div>
+            </div>
+            <div class="composer">
+              <div class="comp">
+                <div class="ph">继续追问，或输入 / 选择技能…</div>
+                <div class="rowbar"><span class="mini">＋</span><span class="mini">技能</span><span class="mini">文件</span><span class="send">↑</span></div>
+              </div>
+            </div>
+          </main>
+
+          <aside class="rail">
+            <div class="card">
+              <div class="card-t">本次任务</div>
+              <div class="row"><span>供应商</span><b>3 家</b></div>
+              <div class="row"><span>报价区间</span><b>$1.42–1.86</b></div>
+              <div class="pbar"><i style="width:68%"></i></div>
+              <div class="hint">已完成 68%</div>
+            </div>
+            <div class="card soft">
+              <div class="card-t">Credits</div>
+              <div class="big">1,240</div>
+              <div class="hint">本月剩余</div>
+            </div>
+            <div class="card banner">
+              <div class="card-t">Agent Hub</div>
+              <div class="hint">3 个 Agent 待调度</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="tokens">
+        <div class="tk-h" id="tkH"><b>当前预设的完整 token 表</b><span id="tkToggle">展开 49 项 ▾</span></div>
+        <div class="tk-body" id="tkBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">
+    说明：预览里的颜色全部由 <code>--color-*-value</code> 一层驱动，组件只读派生出来的 <code>--color-*</code> —— 与 Accio 的
+    <code>:root → .dark → html.dark</code> 结构一致。所以「复制主题包 JSON」拿到的就是注入器要写进页面的那份内容。<br />
+    挑完 1–2 套（或指出哪套的哪块不对）我就把它固化成 <code>.accio-theme.json</code>，进入注入器开发。
+  </p>
+</div>
+<div class="toast" id="toast">已复制主题包 JSON</div>
+
+<script>
+const hex2rgb = h => { h = h.replace('#',''); if (h.length === 3) h = h.split('').map(c=>c+c).join(''); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); };
+const rgb2hex = a => '#' + a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+const mix = (a,b,t) => { const A=hex2rgb(a), B=hex2rgb(b); return rgb2hex(A.map((v,i)=>v+(B[i]-v)*t)); };
+const alpha = (a,o) => `rgba(${hex2rgb(a).join(',')},${o})`;
+
+const PRESETS = [
+  { id: 'abyss', name: '沉静蓝', en: 'abyss', desc: '冷静克制的靛蓝，深蓝底 + 冷靛主色',
+    light: { bg: '#fbfcff', layout: '#f1f4fb', container: '#ffffff', surface: '#f6f8fe', text: '#141a2b', text2: '#5d6884', border: '#dfe5f2', primary: '#2f52d8', pfg: '#ffffff', accent: '#edf1fe' },
+    dark: { bg: '#0a0d16', layout: '#05070d', container: '#111527', surface: '#0d1020', text: '#e6eaf5', text2: '#96a1bd', border: '#202741', primary: '#6f8dff', pfg: '#080d1c', accent: '#1a2140' } },
+  { id: 'aurora', name: '极光青', en: 'aurora', desc: '清冽通透的青绿，高饱和主色',
+    light: { bg: '#fbfefd', layout: '#eef8f5', container: '#ffffff', surface: '#f4fbf9', text: '#0f211d', text2: '#55736c', border: '#d8eae4', primary: '#0b7f69', pfg: '#ffffff', accent: '#e3f7ef' },
+    dark: { bg: '#06110f', layout: '#030b09', container: '#0c1c18', surface: '#081614', text: '#e2f5ef', text2: '#85a9a1', border: '#17332c', primary: '#35e0b0', pfg: '#03211a', accent: '#0f2620' } },
+  { id: 'nebula', name: '星云紫', en: 'nebula', desc: '深邃漫射的紫，夜感最强',
+    light: { bg: '#fdfbff', layout: '#f5f1fe', container: '#ffffff', surface: '#faf7ff', text: '#1d1730', text2: '#6b5f8a', border: '#e7e0f7', primary: '#6d3fe0', pfg: '#ffffff', accent: '#f0eafe' },
+    dark: { bg: '#0b0816', layout: '#060410', container: '#17102a', surface: '#110b1f', text: '#ece6fb', text2: '#a294c4', border: '#2b2147', primary: '#b18cff', pfg: '#150c2b', accent: '#221a3d' } },
+  { id: 'ember', name: '余烬橙', en: 'ember', desc: '温暖克制的琥珀，暖底不发黄',
+    light: { bg: '#fffdf9', layout: '#faf3ea', container: '#ffffff', surface: '#fdf8f1', text: '#20180f', text2: '#7c6a55', border: '#efe1cd', primary: '#b45510', pfg: '#ffffff', accent: '#fdefdb' },
+    dark: { bg: '#110d09', layout: '#0a0705', container: '#1d1610', surface: '#15100b', text: '#f7ede1', text2: '#bda48d', border: '#352a1e', primary: '#ffa54f', pfg: '#241406', accent: '#2a1d12' } },
+  { id: 'midnight', name: '午夜黑', en: 'midnight', desc: '纯黑 OLED，零色彩干扰',
+    light: { bg: '#fcfcfc', layout: '#f2f2f3', container: '#ffffff', surface: '#f8f8f8', text: '#131314', text2: '#6a6a70', border: '#e3e3e5', primary: '#1a1a1c', pfg: '#ffffff', accent: '#ededef' },
+    dark: { bg: '#000000', layout: '#000000', container: '#0d0d0f', surface: '#080809', text: '#f4f4f5', text2: '#9b9ba1', border: '#26262a', primary: '#f4f4f5', pfg: '#0a0a0b', accent: '#1a1a1c' } },
+  { id: 'ivory', name: '极简白', en: 'ivory', desc: 'iOS 暖白 + 系统蓝，最像原生',
+    light: { bg: '#fdfcf9', layout: '#f4f1ec', container: '#ffffff', surface: '#faf8f4', text: '#1a1917', text2: '#6c6a64', border: '#e6e2da', primary: '#0062cc', pfg: '#ffffff', accent: '#edf2fb' },
+    dark: { bg: '#1b1b1d', layout: '#101012', container: '#262629', surface: '#202023', text: '#f2f2f7', text2: '#9a9aa2', border: '#37373c', primary: '#4da3ff', pfg: '#07192b', accent: '#1e2733' } },
+  { id: 'mist', name: '干净明亮', en: 'mist', desc: '清透玻璃，浅色模式最透气',
+    light: { bg: '#fcfefe', layout: '#ecf5f7', container: '#ffffff', surface: '#f3fafb', text: '#12262b', text2: '#55707a', border: '#d6e8ec', primary: '#0b7d94', pfg: '#ffffff', accent: '#e5f4f7' },
+    dark: { bg: '#0a1315', layout: '#050d0f', container: '#102022', surface: '#0c181a', text: '#e6f2f4', text2: '#8fa8ad', border: '#1d3134', primary: '#43c6dc', pfg: '#04232a', accent: '#10262a' } },
+  { id: 'rose', name: '材质粉', en: 'rose', desc: 'Material 粉，明快但不刺眼',
+    light: { bg: '#fffbfc', layout: '#fdf1f4', container: '#ffffff', surface: '#fef7f9', text: '#231a1c', text2: '#7e6469', border: '#f1dde2', primary: '#c2185b', pfg: '#ffffff', accent: '#fdeaf1' },
+    dark: { bg: '#120b0e', layout: '#0b0507', container: '#1f1419', surface: '#171013', text: '#f8eaee', text2: '#bb9ba1', border: '#37242a', primary: '#ff7ba6', pfg: '#2a0713', accent: '#2a181d' } }
+];
+
+const ORDER = ['primary','primary-dark','primary-foreground','primary-bg','high-contrast','high-contrast-foreground',
+'text-primary','text-secondary','text-tertiary','text-quaternary','input-placeholder','background','bg-layout',
+'bg-container','agent-hub-banner-green','agent-hub-banner-blue','layer-surface','layer-background-dim',
+'layer-container-dimer','bg-chip','foreground','sidebar-item-hover','sidebar-nav-foreground',
+'sidebar-nav-active-foreground','sidebar-session-title','sidebar-session-title-archived','destructive',
+'destructive-foreground','success','warning','info','expert-author','badge-success-text','badge-success-bg',
+'badge-warning-text','badge-warning-bg','chat-cta-bg','chat-cta-bg-hover','store-gate-edge','store-gate-arrow',
+'surface','muted','muted-foreground','border','border-subtle','border-divider','border-strong','accent','accent-foreground'];
+
+function build(a, mode){
+  const dark = mode === 'dark';
+  const to = (c,t) => mix(c, dark ? '#ffffff' : '#000000', t);   // 朝对比端偏移
+  const back = (c,t) => mix(c, a.bg, t);                          // 朝底色靠
+  const t = {
+    'primary': a.primary,
+    'primary-dark': to(a.primary, dark ? .14 : .16),
+    'primary-foreground': a.pfg,
+    'primary-bg': mix(a.primary, a.bg, dark ? .82 : .90),
+    'high-contrast': a.text,
+    'high-contrast-foreground': a.bg,
+    'text-primary': a.text,
+    'text-secondary': a.text2,
+    'text-tertiary': back(a.text2, dark ? .42 : .58),
+    'text-quaternary': to(a.text2, dark ? .12 : .06),
+    'input-placeholder': back(a.text2, dark ? .28 : .30),
+    'background': a.bg,
+    'bg-layout': a.layout,
+    'bg-container': a.container,
+    'agent-hub-banner-green': mix(a.primary, a.bg, dark ? .86 : .93),
+    'agent-hub-banner-blue': mix('#3b82f6', a.bg, dark ? .88 : .94),
+    'layer-surface': mix(a.surface, a.bg, .4),
+    'layer-background-dim': back(a.text, dark ? .12 : .05),
+    'layer-container-dimer': back(a.text, dark ? .18 : .09),
+    'bg-chip': back(a.text2, dark ? .78 : .88),
+    'foreground': a.text,
+    'sidebar-item-hover': alpha(a.text, dark ? .09 : .05),
+    'sidebar-nav-foreground': back(a.text, dark ? .28 : .18),
+    'sidebar-nav-active-foreground': a.text,
+    'sidebar-session-title': back(a.text, dark ? .22 : .16),
+    'sidebar-session-title-archived': back(a.text, dark ? .58 : .55),
+    'destructive': dark ? '#ff6b6b' : '#e52828',
+    'destructive-foreground': '#ffffff',
+    'success': dark ? '#3fbf7f' : '#22891f',
+    'warning': dark ? '#ffa733' : '#f88000',
+    'info': dark ? '#7aa8ff' : '#2f6fd0',
+    'expert-author': mix(a.primary, '#3b82f6', .45),
+    'badge-success-text': dark ? '#4ecf8f' : mix('#1f8f5f', a.primary, .25),
+    'badge-success-bg': mix('#22891f', a.bg, dark ? .84 : .92),
+    'badge-warning-text': dark ? '#ffb259' : '#c47100',
+    'badge-warning-bg': mix('#f0870a', a.bg, dark ? .84 : .90),
+    'chat-cta-bg': mix(a.primary, a.bg, dark ? .80 : .90),
+    'chat-cta-bg-hover': mix(a.primary, a.bg, dark ? .72 : .83),
+    'store-gate-edge': back(a.border, .35),
+    'store-gate-arrow': mix(a.primary, a.bg, dark ? .78 : .88),
+    'surface': a.surface,
+    'muted': a.layout,
+    'muted-foreground': a.text2,
+    'border': a.border,
+    'border-subtle': back(a.border, .45),
+    'border-divider': back(a.border, .25),
+    'border-strong': back(a.text2, .38),
+    'accent': a.accent,
+    'accent-foreground': a.text
+  };
+  return t;
+}
+
+const stage = document.getElementById('stage');
+const listEl = document.getElementById('list');
+let cur = 0, mode = 'dark';
+
+let wallPct = 0;
+const withWall = (tk, pct) => {
+  const o = Object.assign({}, tk);
+  ['background','bg-layout','bg-container','surface','layer-surface','bg-chip','muted','accent'].forEach(k=>{
+    if (o[k] && String(o[k]).startsWith('#')) o[k] = `color-mix(in srgb, ${o[k]} ${pct}%, transparent)`;
+  });
+  return o;
+};
+
+function apply(){
+  const p = PRESETS[cur];
+  let tk = build(p[mode], mode);
+  if (wallPct) tk = withWall(tk, wallPct);
+  for (const k in tk) stage.style.setProperty('--color-' + k + '-value', tk[k]);
+  document.getElementById('curName').textContent = p.name + ' · ' + p.en;
+  document.getElementById('curMode').textContent = mode === 'dark' ? '深色' : '浅色';
+  document.getElementById('curCount').textContent = Object.keys(tk).length;
+  renderTokens(tk);
+}
+
+function renderTokens(tk){
+  const body = document.getElementById('tkBody');
+  body.innerHTML = ORDER.map(k=>{
+    const v = tk[k];
+    const isColor = v.startsWith('#') || v.startsWith('rgba');
+    return `<div class="tk"><span class="d" style="background:${isColor?v:'transparent'}"></span><span class="n">--color-${k}-value</span><span class="v">${v}</span></div>`;
+  }).join('');
+}
+
+function renderList(){
+  listEl.innerHTML = PRESETS.map((p,i)=>{
+    const a = p.dark;
+    return `<div class="item ${i===cur?'on':''}" data-i="${i}">
+      <span class="sw" style="background:linear-gradient(150deg,${a.container} 0 52%,${a.layout} 52% 100%)"><i style="background:${a.primary}"></i></span>
+      <span class="nm">${p.name}<em>${p.en} · ${p.desc}</em></span>
+    </div>`;
+  }).join('');
+}
+
+listEl.addEventListener('click', e=>{
+  const it = e.target.closest('.item'); if(!it) return;
+  cur = +it.dataset.i; const Q = new URLSearchParams(location.search);
+if (Q.get('theme')) { const i = PRESETS.findIndex(x=>x.id===Q.get('theme')); if (i>=0) cur = i; }
+if (Q.get('mode')==='light' || Q.get('mode')==='dark') {
+  mode = Q.get('mode');
+  document.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on', x.dataset.mode===mode));
+  stage.dataset.mode = mode;
+}
+if (Q.get('wall')) {
+  wallPct = Number(Q.get('wall')) || 46;
+  stage.classList.add('wall');
+  stage.style.setProperty('--wall-img', Q.get('wallimg') || 'radial-gradient(circle at 28% 18%,#1d4f4a,#0a1b1e 62%)');
+}
+if (Q.get('shot')) document.body.classList.add('shot');
+if (Q.get('debug')) {
+  setTimeout(()=>{
+    const r = el => { const b = el.getBoundingClientRect(); return Math.round(b.width)+'x'+Math.round(b.height)+'@'+Math.round(b.top); };
+    const m = ['vh=' + window.innerHeight, 'stage=' + r(stage), 'app=' + r(stage.querySelector('.app')), 'wrap=' + r(document.querySelector('.wrap')), 'body=' + r(document.body)];
+    document.body.setAttribute('data-metrics', m.join(' | '));
+    document.title = m.join(' | ');
+  }, 400);
+}
+if (Q.get('panel')) {
+  const box = document.createElement('div');
+  box.className = 'mockpanel on';
+  box.innerHTML = '<div class="mp-tabs"><span class="on">皮肤</span><span>强调色</span><span>壁纸</span><span>包</span></div>'
+    + PRESETS.map((x,i)=>`<div class="mp-row ${i===cur?'on':''}"><span class="mp-sw" style="background:${x.dark.primary};border-color:${x.light.border}"></span><span>${x.name}</span><span class="mp-ck">${i===cur?'✓':''}</span></div>`).join('')
+    + '<div class="mp-ft"><div class="mp-row"><span class="mp-sw" style="background:linear-gradient(135deg,#fff 50%,#333 50%)"></span>还原官方外观<span class="mp-ck">✓</span></div></div>';
+  stage.appendChild(box);
+}
+
+renderList(); apply();
+});
+
+document.querySelectorAll('.seg button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    mode = b.dataset.mode;
+    document.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on', x===b));
+    stage.dataset.mode = mode; apply();
+  });
+});
+
+document.getElementById('tkH').addEventListener('click', ()=>{
+  const body = document.getElementById('tkBody');
+  const open = body.classList.toggle('open');
+  document.getElementById('tkToggle').textContent = (open?'收起 ▴':'展开 49 项 ▾');
+});
+
+document.getElementById('copyBtn').addEventListener('click', async ()=>{
+  const p = PRESETS[cur];
+  const pack = {
+    schema: 'accio-theme/1',
+    name: p.name, id: p.id, author: 'Rich4ever',
+    createdAt: new Date().toISOString().slice(0,10),
+    tokens: { light: build(p.light,'light'), dark: build(p.dark,'dark') }
+  };
+  const txt = JSON.stringify(pack, null, 2);
+  try { await navigator.clipboard.writeText(txt); }
+  catch(_) {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  const toast = document.getElementById('toast');
+  toast.textContent = '已复制「' + p.name + '」主题包 JSON（' + Object.keys(pack.tokens.light).length + ' × 2 个 token）';
+  toast.classList.add('on'); setTimeout(()=>toast.classList.remove('on'), 2000);
+});
+
+const Q = new URLSearchParams(location.search);
+if (Q.get('theme')) { const i = PRESETS.findIndex(x=>x.id===Q.get('theme')); if (i>=0) cur = i; }
+if (Q.get('mode')==='light' || Q.get('mode')==='dark') {
+  mode = Q.get('mode');
+  document.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on', x.dataset.mode===mode));
+  stage.dataset.mode = mode;
+}
+if (Q.get('wall')) {
+  wallPct = Number(Q.get('wall')) || 46;
+  stage.classList.add('wall');
+  stage.style.setProperty('--wall-img', Q.get('wallimg') || 'radial-gradient(circle at 28% 18%,#1d4f4a,#0a1b1e 62%)');
+}
+if (Q.get('shot')) document.body.classList.add('shot');
+if (Q.get('debug')) {
+  setTimeout(()=>{
+    const r = el => { const b = el.getBoundingClientRect(); return Math.round(b.width)+'x'+Math.round(b.height)+'@'+Math.round(b.top); };
+    const m = ['vh=' + window.innerHeight, 'stage=' + r(stage), 'app=' + r(stage.querySelector('.app')), 'wrap=' + r(document.querySelector('.wrap')), 'body=' + r(document.body)];
+    document.body.setAttribute('data-metrics', m.join(' | '));
+    document.title = m.join(' | ');
+  }, 400);
+}
+if (Q.get('panel')) {
+  const box = document.createElement('div');
+  box.className = 'mockpanel on';
+  box.innerHTML = '<div class="mp-tabs"><span class="on">皮肤</span><span>强调色</span><span>壁纸</span><span>包</span></div>'
+    + PRESETS.map((x,i)=>`<div class="mp-row ${i===cur?'on':''}"><span class="mp-sw" style="background:${x.dark.primary};border-color:${x.light.border}"></span><span>${x.name}</span><span class="mp-ck">${i===cur?'✓':''}</span></div>`).join('')
+    + '<div class="mp-ft"><div class="mp-row"><span class="mp-sw" style="background:linear-gradient(135deg,#fff 50%,#333 50%)"></span>还原官方外观<span class="mp-ck">✓</span></div></div>';
+  stage.appendChild(box);
+}
+
+renderList(); apply();
+</script>
+</body>
+</html>

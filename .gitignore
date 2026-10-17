@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# local artifacts
+shot-*.png
+*.log
+*.tmp
+
+# 本机 node 路径（每个机器不一样，不入库）
+.nodepath
+
+# editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# personal theme packs exported from the panel
+accio-skin-*.json

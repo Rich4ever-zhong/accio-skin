@@ -1,0 +1,49 @@
+{
+  "name": "accio-skin",
+  "version": "0.4.0",
+  "description": "External skinning for Accio Work (Electron): token-based themes, accent color, wallpaper and shareable theme packs. Zero runtime dependencies.",
+  "type": "module",
+  "main": "injector.mjs",
+  "bin": {
+    "accio-skin": "injector.mjs"
+  },
+  "scripts": {
+    "themes": "node build-themes.mjs",
+    "start": "node injector.mjs",
+    "attach": "node injector.mjs --attach",
+    "list": "node injector.mjs --list",
+    "tray": "powershell -NoProfile -ExecutionPolicy Bypass -File tray/accio-skin-tray.ps1",
+    "startup:install": "powershell -NoProfile -ExecutionPolicy Bypass -File install-startup.ps1",
+    "startup:remove": "powershell -NoProfile -ExecutionPolicy Bypass -File install-startup.ps1 -Remove",
+    "shortcuts:patch": "powershell -NoProfile -ExecutionPolicy Bypass -File patch-shortcuts.ps1",
+    "shortcuts:restore": "powershell -NoProfile -ExecutionPolicy Bypass -File patch-shortcuts.ps1 -Restore",
+    "docs": "node tools/shoot-docs.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "injector.mjs",
+    "build-themes.mjs",
+    "themes",
+    "preview.html",
+    "tools",
+    "tray",
+    "docs",
+    "start-skin.cmd",
+    "start-tray.vbs",
+    "setup.cmd",
+    "install-startup.ps1",
+    "patch-shortcuts.ps1"
+  ],
+  "keywords": [
+    "accio",
+    "accio-work",
+    "electron",
+    "theme",
+    "skin",
+    "cdp",
+    "devtools-protocol"
+  ],
+  "license": "MIT"
+}
