@@ -21,6 +21,7 @@ Accio Work 只给了明暗两套内置配色，没有主题商店，插件系统
 - **壁纸** —— 渐变预设、图片 URL、本地图片都行，配浓度和模糊滑杆（浓度有下限：浅色主题 62%、深色 42%，再低正文会糊）
 - **主题包能分享** —— 导出 `.json` 或复制到剪贴板，别人导入即用
 - **打开就是皮肤** —— 托盘常驻，你从哪儿打开 Accio 它都能接上（可开机自启）
+- **悬浮球可以拖** —— 挡着东西就挪开，位置会记住；挪到上半屏时面板自动朝下展开
 - **随时还原** —— 面板里一个按钮，回到 Accio 原样
 
 ## 快速开始
@@ -180,6 +181,16 @@ https://rich4ever-zhong.github.io/accio-skin/preview.html?share=ACCIO1.…
 
 `docs/` 里的图都是 `npm run docs` 用无头 Edge/Chrome 跑 `preview.html` 生成的，随时可以重出。
 
+## 测试
+
+```bash
+npm test        # node --test，20 条，约 1 秒，零依赖
+```
+
+覆盖的东西都是真会出问题的：8 套主题的 token 完整性（49×2）与明暗命名一致、16 组正文对比度 ≥ 4.5、
+8 套主色不重复、分享码编解码往返（含中文与脏输入）、三个 `.mjs` 语法、README 里引用的图片是否存在、
+托盘脚本的 UTF-8 BOM、注入器的关键常量（`ELECTRON_RUN_AS_NODE` 剥离、`ACCIO1.` 前缀、壁纸下限）。
+
 ## 已知限制
 
 - **标题栏换不了**：Electron 的 `titleBarOverlay` 在主进程，渲染层 CSS 管不到
@@ -212,6 +223,7 @@ setup.cmd               一键：装自启 + 可选给快捷方式打补丁
 install-startup.ps1     装/卸开机自启
 patch-shortcuts.ps1     给 Accio 快捷方式加调试参数（留 .bak，可还原）
 tools/shoot-docs.mjs    用无头浏览器重新生成 docs/ 截图
+test/                   20 条自测（node --test）
 docs/                   截图
 ```
 

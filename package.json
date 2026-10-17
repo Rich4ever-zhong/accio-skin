@@ -1,6 +1,6 @@
 {
   "name": "accio-skin",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "External skinning for Accio Work (Electron): token-based themes, accent color, wallpaper and shareable theme packs. Zero runtime dependencies.",
   "type": "module",
   "main": "injector.mjs",
@@ -17,7 +17,8 @@
     "startup:remove": "powershell -NoProfile -ExecutionPolicy Bypass -File install-startup.ps1 -Remove",
     "shortcuts:patch": "powershell -NoProfile -ExecutionPolicy Bypass -File patch-shortcuts.ps1",
     "shortcuts:restore": "powershell -NoProfile -ExecutionPolicy Bypass -File patch-shortcuts.ps1 -Restore",
-    "docs": "node tools/shoot-docs.mjs"
+    "docs": "node tools/shoot-docs.mjs",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=22"
@@ -34,7 +35,8 @@
     "start-tray.vbs",
     "setup.cmd",
     "install-startup.ps1",
-    "patch-shortcuts.ps1"
+    "patch-shortcuts.ps1",
+    "test"
   ],
   "keywords": [
     "accio",

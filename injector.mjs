@@ -100,7 +100,7 @@ function findAccio() {
 
 // ---------- 注入到页面的运行时（自包含，仅依赖 payload） ----------
 function bootstrap(payload) {
-  const VERSION = 9;
+  const VERSION = 10;
   const STORAGE = 'accio.skin.v4';
   const STYLE_ID = '__accio_skin_style';
   const HOST_ID = '__accio_skin_host';
@@ -292,6 +292,20 @@ html,body{background-color:transparent !important}
     const host = document.createElement('div');
     host.id = HOST_ID;
     host.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:2147483646;';
+
+    // 悬浮球可以拖，位置记在 localStorage
+    let fabPos = { r: 14, b: 14 };
+    try {
+      const saved = JSON.parse(localStorage.getItem('accio.skin.fab') || 'null');
+      if (saved && typeof saved.r === 'number' && typeof saved.b === 'number') fabPos = saved;
+    } catch (e) { }
+    const clampPos = q => ({
+      r: Math.max(6, Math.min(Math.max(6, window.innerWidth - 40), q.r)),
+      b: Math.max(6, Math.min(Math.max(6, window.innerHeight - 40), q.b))
+    });
+    fabPos = clampPos(fabPos);
+    host.style.right = fabPos.r + 'px';
+    host.style.bottom = fabPos.b + 'px';
     document.body.appendChild(host);
     sr = host.attachShadow({ mode: 'open' });
 
@@ -302,7 +316,7 @@ html,body{background-color:transparent !important}
 .wrap{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:12.5px}
 .fab{width:30px;height:30px;border-radius:50%;border:1px solid rgba(125,125,125,.28);cursor:pointer;
      display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px -8px rgba(0,0,0,.55);transition:transform .16s}
-.fab:hover{transform:scale(1.06)}
+.fab{cursor:grab}.fab:hover{transform:scale(1.06)}.fab.dragging{cursor:grabbing;transition:none}
 .fab i{width:11px;height:11px;border-radius:50%;border:1.6px solid rgba(255,255,255,.92);display:block}
 .card{position:absolute;right:0;bottom:40px;width:238px;border-radius:13px;padding:8px;
       background:var(--panel-bg,#fff);border:1px solid var(--panel-line,#e6e6e6);color:var(--panel-fg,#111);
@@ -373,6 +387,11 @@ html,body{background-color:transparent !important}
 
     card = sr.getElementById('card');
     fab = sr.getElementById('fab');
+    const placeCard = () => {
+      if (fabPos.b > window.innerHeight / 2) { card.style.bottom = 'auto'; card.style.top = '40px'; }
+      else { card.style.bottom = '40px'; card.style.top = 'auto'; }
+    };
+    placeCard();
 
     sr.getElementById('list').innerHTML = Object.keys(payload.themes).map(id =>
       `<div class="row" data-act="theme" data-id="${id}"><span class="sw"></span><span>${payload.themes[id].name}</span><span class="ck">✓</span></div>`
@@ -382,7 +401,41 @@ html,body{background-color:transparent !important}
     sr.getElementById('wg').innerHTML = WALLS.map(w =>
       `<div class="wt" data-act="wall" data-v="${w.id}" style="background:${w.css}"><span>${w.label}</span></div>`).join('');
 
-    fab.addEventListener('click', e => { e.stopPropagation(); card.classList.toggle('on'); });
+    let fabDrag = null;
+    fab.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      fabDrag = { sx: e.clientX, sy: e.clientY, moved: false };
+      try { fab.setPointerCapture(e.pointerId); } catch (_) { }
+    });
+    fab.addEventListener('pointermove', e => {
+      if (!fabDrag) return;
+      const dx = e.clientX - fabDrag.sx, dy = e.clientY - fabDrag.sy;
+      if (!fabDrag.moved && Math.abs(dx) + Math.abs(dy) < 5) return;   // 抖动阈值
+      fabDrag.moved = true;
+      fab.classList.add('dragging');
+      fabPos = clampPos({ r: window.innerWidth - e.clientX - 15, b: window.innerHeight - e.clientY - 15 });
+      host.style.right = fabPos.r + 'px';
+      host.style.bottom = fabPos.b + 'px';
+      placeCard();
+      card.classList.remove('on');
+    });
+    fab.addEventListener('pointerup', () => {
+      if (!fabDrag) return;
+      const moved = fabDrag.moved;
+      fabDrag = null;
+      fab.classList.remove('dragging');
+      if (moved) {
+        try { localStorage.setItem('accio.skin.fab', JSON.stringify(fabPos)); } catch (_) { }
+      } else {
+        card.classList.toggle('on');       // 没拖动才当点击
+      }
+    });
+    window.addEventListener('resize', () => {
+      fabPos = clampPos(fabPos);
+      host.style.right = fabPos.r + 'px';
+      host.style.bottom = fabPos.b + 'px';
+      placeCard();
+    });
     card.addEventListener('click', e => {
       const t = e.target.closest('[data-tab]');
       if (t) {
