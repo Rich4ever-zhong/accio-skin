@@ -31,6 +31,8 @@ git clone https://github.com/Rich4ever-zhong/accio-skin.git
 cd accio-skin
 ```
 
+不想用 git？到 [Releases](https://github.com/Rich4ever-zhong/accio-skin/releases) 下 zip，解压后一样双击 。
+
 然后**双击 `setup.cmd`**。它会做两件事，都可以撤销：
 
 1. 在「启动」文件夹放一个快捷方式 → 登录 Windows 后托盘静默常驻（无窗口），平时待命
