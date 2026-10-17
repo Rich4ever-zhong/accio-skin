@@ -100,7 +100,7 @@ function findAccio() {
 
 // ---------- 注入到页面的运行时（自包含，仅依赖 payload） ----------
 function bootstrap(payload) {
-  const VERSION = 13;
+  const VERSION = 16;
   const STORAGE = 'accio.skin.v4';
   const STYLE_ID = '__accio_skin_style';
   const HOST_ID = '__accio_skin_host';
@@ -116,12 +116,28 @@ function bootstrap(payload) {
   const h2r = h => { h = String(h || '').replace('#', ''); if (h.length === 3) h = h.split('').map(x => x + x).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
   const r2h = a => '#' + a.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
   const mix = (a, b, t) => { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); };
+  // color-mix(...) 取不出纯 hex 时，抓里面第一个 hex 当参考值
+  const asHex = v => {
+    const str = String(v || '');
+    if (/^#[0-9a-f]{6}$/i.test(str)) return str;
+    const m = str.match(/#[0-9a-f]{6}/i);
+    return m ? m[0] : '#000000';
+  };
+  const lum = hex => {
+    const [r, g, b] = h2r(hex).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a, b) => {
+    const l1 = lum(asHex(a)), l2 = lum(asHex(b));
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  };
 
   // -------- 状态 --------
   const state = {
     theme: payload.def,
     off: false,
     accent: null,
+    text: { fg: null, fg2: null },   // 主文字 / 次要文字 的自定义色
     wall: { type: 'none', value: '', opacity: 0.62, blur: 8 }
   };
   try {
@@ -150,6 +166,33 @@ function bootstrap(payload) {
     });
   };
 
+  // 文字色覆盖：只动文字相关的 token，底色与主色不受影响
+  const applyText = (t, mode) => {
+    const dark = mode === 'dark';
+    const o = Object.assign({}, t);
+    const bg = o['background'];
+    if (state.text && state.text.fg) {
+      const fg = state.text.fg;
+      o['text-primary'] = fg;
+      o['foreground'] = fg;
+      o['high-contrast'] = fg;
+      o['sidebar-nav-active-foreground'] = fg;
+      o['sidebar-nav-foreground'] = mix(fg, bg, dark ? 0.28 : 0.18);
+      o['sidebar-session-title'] = mix(fg, bg, dark ? 0.22 : 0.16);
+    }
+    if (state.text && state.text.fg2) {
+      const fg2 = state.text.fg2;
+      o['text-secondary'] = fg2;
+      o['muted-foreground'] = fg2;
+      o['text-quaternary'] = fg2;
+      o['text-tertiary'] = mix(fg2, bg, dark ? 0.42 : 0.58);
+      o['input-placeholder'] = mix(fg2, bg, dark ? 0.28 : 0.30);
+    }
+    return o;
+  };
+
+  const baseTokens = mode => applyText(recolor(payload.themes[state.theme].tokens[mode], mode, state.accent), mode);
+
   const wallpaperOn = () => !state.off && !!(state.wall && state.wall.type !== 'none' && state.wall.value);
 
   // 浓度 = 面板不透明度。0 表示面板全透明（壁纸最清楚），但正文会糊。
@@ -170,18 +213,15 @@ function bootstrap(payload) {
     return out;
   };
 
-  const tokensOf = mode => {
-    const base = payload.themes[state.theme].tokens[mode];
-    return fade(recolor(base, mode, state.accent), wallOpacity(mode));
-  };
+  const tokensOf = mode => fade(baseTokens(mode), wallOpacity(mode));
 
   const val = o => Object.keys(o).map(k => `--color-${k}-value:${o[k]};--color-${k}:${o[k]};`).join('');
 
   // Accio 有相当一部分表面用的是 Tailwind 调色板（zinc / neutral / slate…），不读语义 token。
   // 把这几个中性色阶整体映射到主题自己的底色与文字色，换肤才能覆盖到那部分界面。
   function rampVars(mode) {
-    // 注意：这里必须用未叠加壁纸透明度的原始 token，否则 mix() 会拿到 color-mix 字符串
-    const t = recolor(payload.themes[state.theme].tokens[mode], mode, state.accent);
+    // 注意：这里必须用未叠加壁纸透明度的 token，否则 mix() 会拿到 color-mix 字符串
+    const t = baseTokens(mode);
     const dark = mode === 'dark';
     const bg = t['background'], ct = t['bg-container'], bd = t['border'],
       fg = t['text-primary'], s2 = t['text-secondary'], s3 = t['text-tertiary'];
@@ -361,6 +401,10 @@ html,body{background-color:transparent !important}
 .sl{display:flex;align-items:center;gap:7px;padding:3px 6px;font-size:11px;opacity:.85}
 .sl input{flex:1;height:3px}
 .sl b{width:30px;text-align:right;font-weight:400;opacity:.7}
+.sep2{height:1px;background:var(--panel-line,#e6e6e6);margin:7px 6px 5px}
+input[type=color]{width:34px;height:22px;padding:0;border:1px solid var(--panel-line,#e6e6e6);
+  border-radius:6px;background:transparent;cursor:pointer}
+.btn.tiny{font-size:10.5px;padding:2px 7px;border-radius:5px}
 .ft{margin-top:5px;border-top:1px solid var(--panel-line,#e6e6e6);padding-top:5px}
 .hint{padding:2px 6px 6px;font-size:10.5px;opacity:.55;line-height:1.5}
 .diag{padding:7px 6px 3px;font-size:10.5px;opacity:.5;line-height:1.5;border-top:1px solid var(--panel-line,#e6e6e6);margin-top:4px}
@@ -369,7 +413,7 @@ html,body{background-color:transparent !important}
   <div class="card" id="card">
     <div class="tabs">
       <button data-tab="theme" class="on">皮肤</button>
-      <button data-tab="accent">强调色</button>
+      <button data-tab="accent">颜色</button>
       <button data-tab="wall">壁纸</button>
       <button data-tab="pack">包</button>
     </div>
@@ -377,6 +421,10 @@ html,body{background-color:transparent !important}
     <div class="pane" id="pane-accent">
       <div class="grid" id="sw"></div>
       <div class="field"><button class="btn" id="rand">随机</button><button class="btn" id="accOff">恢复原色</button></div>
+      <div class="sep2"></div>
+      <div class="sl">主文字<input type="color" id="tfg"><button class="btn tiny" id="tfg0">重置</button></div>
+      <div class="sl">次要文<input type="color" id="tfg2"><button class="btn tiny" id="tfg20">重置</button></div>
+      <div class="hint" id="tcv">对比度 —</div>
     </div>
     <div class="pane" id="pane-wall">
       <div class="wgrid" id="wg"></div>
@@ -460,6 +508,7 @@ html,body{background-color:transparent !important}
       const act = el.dataset.act;
       if (act === 'off') {
         state.off = true; state.accent = null;
+        state.text = { fg: null, fg2: null };
         state.wall = { type: 'none', value: '', opacity: 0.62, blur: 8 };
         save(); render();
       } else if (act === 'theme') { state.off = false; state.theme = el.dataset.id; save(); render(); }
@@ -478,6 +527,13 @@ html,body{background-color:transparent !important}
       state.accent = hsl2hex(h, 0.66, 0.6); save(); render();
     });
     sr.getElementById('accOff').addEventListener('click', () => { state.off = false; state.accent = null; save(); render(); });
+
+    if (!state.text) state.text = { fg: null, fg2: null };
+    const setText = (which, v) => { state.off = false; state.text[which] = v; save(); render(); };
+    sr.getElementById('tfg').addEventListener('input', e => setText('fg', e.target.value));
+    sr.getElementById('tfg2').addEventListener('input', e => setText('fg2', e.target.value));
+    sr.getElementById('tfg0').addEventListener('click', () => { state.text.fg = null; save(); render(); });
+    sr.getElementById('tfg20').addEventListener('click', () => { state.text.fg2 = null; save(); render(); });
     sr.getElementById('wgo').addEventListener('click', () => {
       const v = sr.getElementById('wurl').value.trim();
       if (!v) return;
@@ -635,16 +691,18 @@ html,body{background-color:transparent !important}
   }
 
   const SHARE_BASE = payload.shareBase || 'https://rich4ever-zhong.github.io/accio-skin/preview.html';
-  const rawTokens = mode => recolor(payload.themes[state.theme].tokens[mode], mode, state.accent);
+  const rawTokens = mode => baseTokens(mode);
 
   async function makeShareCode() {
     const custom = BUILTIN.indexOf(state.theme) === -1;
     const pack = { v: 1, t: state.theme, n: payload.themes[state.theme].name };
     if (state.accent) pack.a = state.accent;
+    if (state.text && (state.text.fg || state.text.fg2)) pack.f = [state.text.fg, state.text.fg2];
     const w = state.wall;
     if (w && w.type !== 'none' && w.value) pack.w = [w.type, w.value, w.opacity, w.blur];
-    // 自定义主题或改了强调色时，把最终 token 一起带上，保证对方看到完全一致的颜色
-    if (custom || state.accent) pack.k = { light: rawTokens('light'), dark: rawTokens('dark') };
+    // 自定义主题、改过强调色或文字色时，把最终 token 一起带上，保证对方看到完全一致的颜色
+    const tweaked = custom || state.accent || (state.text && (state.text.fg || state.text.fg2));
+    if (tweaked) pack.k = { light: rawTokens('light'), dark: rawTokens('dark') };
     return 'ACCIO1.' + b64u(await deflate(JSON.stringify(pack)));
   }
 
@@ -664,6 +722,8 @@ html,body{background-color:transparent !important}
       throw new Error('分享码里的主题不认识');
     }
     state.off = false;
+    // token 里已经算过强调色与文字色，导入后不要再叠加一次覆盖
+    state.text = { fg: null, fg2: null };
     state.wall = pack.w
       ? { type: pack.w[0], value: pack.w[1], opacity: pack.w[2], blur: pack.w[3] }
       : { type: 'none', value: '', opacity: 0.62, blur: 8 };
@@ -727,6 +787,19 @@ html,body{background-color:transparent !important}
     if (op) { op.value = Math.round(state.wall.opacity * 100); sr.getElementById('wopv').textContent = op.value + '%'; }
     if (bl) { bl.value = state.wall.blur; sr.getElementById('wblv').textContent = bl.value; }
 
+    const tfg = sr.getElementById('tfg');
+    if (tfg) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const eff = baseTokens(isDark ? 'dark' : 'light');
+      const fg = asHex(eff['text-primary']), fg2 = asHex(eff['text-secondary']), bgc = asHex(eff['background']);
+      tfg.value = fg;
+      sr.getElementById('tfg2').value = fg2;
+      const r = ratio(fg, bgc);
+      const tcv = sr.getElementById('tcv');
+      tcv.textContent = '正文对比度 ' + r.toFixed(1) + ':1 · ' + (r >= 4.5 ? '可读' : r >= 3 ? '偏吃力' : '太低，建议提亮或压暗');
+      tcv.style.color = r >= 4.5 ? '' : '#c0392b';
+    }
+
     const dg = sr.getElementById('diag');
     if (dg) {
       const d = window.__accioSkin && window.__accioSkin.diag;
@@ -771,8 +844,10 @@ html,body{background-color:transparent !important}
     makeCode: () => makeShareCode(),
     applyCode: c => applyShareCode(c),
     setAccent: v => { state.off = false; state.accent = v || null; save(); render(); },
+    setText: (fg, fg2) => { state.off = false; state.text = { fg: fg || null, fg2: fg2 || null }; save(); render(); },
     setOff: () => {
       state.off = true; state.accent = null;
+      state.text = { fg: null, fg2: null };
       state.wall = { type: 'none', value: '', opacity: 0.62, blur: 8 };
       save(); render();
     },
