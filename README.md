@@ -97,6 +97,8 @@ node injector.mjs --no-control        # 不启动本地控制通道
 node injector.mjs --port=9222         # 调试端口
 node injector.mjs --exe="C:\path\Accio.exe"
 node injector.mjs --log=%TEMP%\a.log  # 同时写日志文件
+node injector.mjs --share-base=https://<你的用户名>.github.io/accio-skin/preview.html
+                                      # fork 之后让分享链接指向自己的 Pages（也可用环境变量 ACCIO_SKIN_SHARE_BASE）
 ```
 
 ## 托盘菜单
