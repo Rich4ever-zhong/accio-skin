@@ -100,7 +100,7 @@ function findAccio() {
 
 // ---------- 注入到页面的运行时（自包含，仅依赖 payload） ----------
 function bootstrap(payload) {
-  const VERSION = 8;
+  const VERSION = 9;
   const STORAGE = 'accio.skin.v4';
   const STYLE_ID = '__accio_skin_style';
   const HOST_ID = '__accio_skin_host';
@@ -152,6 +152,13 @@ function bootstrap(payload) {
 
   const wallpaperOn = () => !state.off && !!(state.wall && state.wall.type !== 'none' && state.wall.value);
 
+  // 壁纸会压低正文对比度：浅色主题下限 62%，深色主题下限 42%（低于此值正文开始发虚）
+  const WALL_MIN = { light: 0.62, dark: 0.42 };
+  const wallOpacity = mode => {
+    const want = Number(state.wall.opacity) || 0.62;
+    return Math.min(1, Math.max(WALL_MIN[mode] || 0.42, want));
+  };
+
   const fade = (t, alpha) => {
     if (!wallpaperOn()) return t;
     const pct = Math.round(Math.max(0.3, Math.min(1, alpha)) * 100);
@@ -164,7 +171,7 @@ function bootstrap(payload) {
 
   const tokensOf = mode => {
     const base = payload.themes[state.theme].tokens[mode];
-    return fade(recolor(base, mode, state.accent), state.wall.opacity);
+    return fade(recolor(base, mode, state.accent), wallOpacity(mode));
   };
 
   const val = o => Object.keys(o).map(k => `--color-${k}-value:${o[k]};--color-${k}:${o[k]};`).join('');
@@ -330,6 +337,7 @@ html,body{background-color:transparent !important}
 .sl b{width:30px;text-align:right;font-weight:400;opacity:.7}
 .ft{margin-top:5px;border-top:1px solid var(--panel-line,#e6e6e6);padding-top:5px}
 .hint{padding:2px 6px 6px;font-size:10.5px;opacity:.55;line-height:1.5}
+.diag{padding:7px 6px 3px;font-size:10.5px;opacity:.5;line-height:1.5;border-top:1px solid var(--panel-line,#e6e6e6);margin-top:4px}
 </style>
 <div class="wrap">
   <div class="card" id="card">
@@ -339,7 +347,7 @@ html,body{background-color:transparent !important}
       <button data-tab="wall">壁纸</button>
       <button data-tab="pack">包</button>
     </div>
-    <div class="pane on" id="pane-theme"><div id="list"></div></div>
+    <div class="pane on" id="pane-theme"><div id="list"></div><div class="diag" id="diag">正在自检…</div></div>
     <div class="pane" id="pane-accent">
       <div class="grid" id="sw"></div>
       <div class="field"><button class="btn" id="rand">随机</button><button class="btn" id="accOff">恢复原色</button></div>
@@ -432,7 +440,15 @@ html,body{background-color:transparent !important}
       };
       inp.click();
     });
-    sr.getElementById('wop').addEventListener('input', e => { state.wall.opacity = Number(e.target.value) / 100; save(); render(); });
+    sr.getElementById('wop').addEventListener('input', e => {
+      state.wall.opacity = Number(e.target.value) / 100;
+      save(); render();
+      const dark = document.documentElement.classList.contains('dark');
+      const used = wallOpacity(dark ? 'dark' : 'light');
+      if (Math.abs(used - state.wall.opacity) > 0.005) {
+        toast((dark ? '深色' : '浅色') + '模式下浓度下限 ' + Math.round(used * 100) + '%，再低正文就糊了');
+      }
+    });
     sr.getElementById('wbl').addEventListener('input', e => { state.wall.blur = Number(e.target.value); save(); render(); });
 
     sr.getElementById('exp').addEventListener('click', () => { copy(exportPack()); toast('主题包已复制'); });
@@ -553,7 +569,7 @@ html,body{background-color:transparent !important}
     return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
   }
 
-  const SHARE_BASE = 'https://rich4ever-zhong.github.io/accio-skin/preview.html';
+  const SHARE_BASE = payload.shareBase || 'https://rich4ever-zhong.github.io/accio-skin/preview.html';
   const rawTokens = mode => recolor(payload.themes[state.theme].tokens[mode], mode, state.accent);
 
   async function makeShareCode() {
@@ -645,9 +661,35 @@ html,body{background-color:transparent !important}
     const op = sr.getElementById('wop'), bl = sr.getElementById('wbl');
     if (op) { op.value = Math.round(state.wall.opacity * 100); sr.getElementById('wopv').textContent = op.value + '%'; }
     if (bl) { bl.value = state.wall.blur; sr.getElementById('wblv').textContent = bl.value; }
+
+    const dg = sr.getElementById('diag');
+    if (dg) {
+      const d = window.__accioSkin && window.__accioSkin.diag;
+      if (!d) dg.textContent = '正在自检…';
+      else if (d.missing.length) {
+        dg.textContent = '适配 ' + (d.expected - d.missing.length) + '/' + d.expected + ' · 缺 ' + d.missing.length + ' 项 · Accio ' + d.accio;
+        dg.title = '未解析到：' + d.missing.join(', ');
+      } else {
+        dg.textContent = '适配 ' + d.expected + '/' + d.expected + ' · Accio ' + d.accio;
+        dg.title = '全部 token 正常';
+      }
+    }
   }
 
   // -------- 挂载时机 --------
+  // 自检：49 个 token 是否都能在页面上解析出来。Accio 升级改名时，这里会先报警。
+  function runDiag() {
+    const cs = getComputedStyle(document.documentElement);
+    const sample = payload.themes[state.theme].tokens.light;
+    const keys = Object.keys(sample);
+    const missing = keys.filter(k => !(cs.getPropertyValue('--color-' + k + '-value') || '').trim());
+    const d = { expected: keys.length, missing, accio: payload.accioVersion || 'unknown', at: new Date().toISOString() };
+    window.__accioSkin.diag = d;
+    if (missing.length) console.warn('[accio-skin] 未解析到的 token（Accio 可能改过名）：' + missing.join(','));
+    if (sr && card) { try { paint(); } catch (e) { } }
+    return d;
+  }
+
   function whenBody(fn) {
     if (document.body) return fn();
     let n = 0;
@@ -683,6 +725,7 @@ html,body{background-color:transparent !important}
   render();
   if (payload.panel) whenBody(() => setTimeout(() => {
     try { mountPanel(); } catch (e) { window.__accioSkinPanelError = String((e && e.stack) || e); }
+    setTimeout(runDiag, 900);
   }, 400));
 }
 
@@ -724,6 +767,34 @@ class CDP {
   close() { try { this.ws.close(); } catch (e) { } }
 }
 
+// ---------- 读 Accio 版本（直接从 app.asar 的 package.json 取，不依赖 App 暴露） ----------
+function readAccioVersion(exePath) {
+  try {
+    const asar = path.join(path.dirname(exePath), 'resources', 'app.asar');
+    if (!fs.existsSync(asar)) return null;
+    const fd = fs.openSync(asar, 'r');
+    const head = Buffer.alloc(16);
+    fs.readSync(fd, head, 0, 16, 0);
+    const headerSize = head.readUInt32LE(12);
+    const jsonBuf = Buffer.alloc(headerSize);
+    fs.readSync(fd, jsonBuf, 0, headerSize, 16);
+    const header = JSON.parse(jsonBuf.toString('utf8'));
+    const entry = header.files && header.files['package.json'];
+    if (!entry) { fs.closeSync(fd); return null; }
+    const buf = Buffer.alloc(entry.size);
+    fs.readSync(fd, buf, 0, entry.size, 16 + headerSize + Number(entry.offset));
+    fs.closeSync(fd);
+    return JSON.parse(buf.toString('utf8')).version || null;
+  } catch (e) { return null; }
+}
+
+// ---------- 分享页地址（fork 后可用 --share-base 或环境变量覆盖） ----------
+const SHARE_BASE = String(
+  args['share-base'] ||
+  process.env.ACCIO_SKIN_SHARE_BASE ||
+  'https://rich4ever-zhong.github.io/accio-skin/preview.html'
+);
+
 // ---------- 进程 / 端口 ----------
 async function debugAlive() {
   try {
@@ -748,10 +819,13 @@ async function listPages() {
 
 // ---------- 主流程 ----------
 const themes = loadThemes();
-const payload = { themes, def: THEME, panel: WITH_PANEL };
+const accioVersion = readAccioVersion(findAccio() || '');
+const payload = { themes, def: THEME, panel: WITH_PANEL, shareBase: SHARE_BASE, accioVersion };
 const bootSrc = `(${bootstrap.toString()})(${JSON.stringify(payload)})`;
 
-log(c.b('Accio Skin') + c.dim(` · v0.3 · 默认 ${themes[THEME].name} · 端口 ${PORT}`));
+let PKG = {};
+try { PKG = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8')); } catch (e) { }
+log(c.b('Accio Skin') + c.dim(` · v${PKG.version || '?'} · 默认 ${themes[THEME].name} · 端口 ${PORT}`));
 
 if (args.list) {
   const pages = await listPages();
@@ -883,6 +957,8 @@ function startControl() {
       if (path0 === 'status') {
         const raw = await evalInMain('window.__accioSkin ? JSON.stringify({theme:window.__accioSkin.state.theme,off:window.__accioSkin.state.off,accent:window.__accioSkin.state.accent,wall:window.__accioSkin.state.wall.type}) : null');
         const st = raw ? JSON.parse(raw) : null;
+        const diagRaw = await evalInMain('window.__accioSkin && window.__accioSkin.diag ? JSON.stringify(window.__accioSkin.diag) : null');
+        const diag = diagRaw ? JSON.parse(diagRaw) : null;
         return send({
           ok: !!st,
           theme: st ? st.theme : null,
@@ -891,7 +967,8 @@ function startControl() {
           accent: st ? st.accent : null,
           wall: st ? st.wall : null,
           themes: ids.map(id => ({ id, name: themes[id].name })),
-          pages: sessions.size
+          pages: sessions.size,
+          diag
         });
       }
       if (path0 === 'next') {

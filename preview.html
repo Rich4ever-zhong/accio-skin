@@ -478,7 +478,7 @@ const withWall = (tk, pct) => {
 function apply(){
   const p = PRESETS[cur];
   let tk = p.raw ? Object.assign({}, p.raw[mode]) : build(p[mode], mode);
-  if (wallPct) tk = withWall(tk, wallPct);
+  if (wallPct) tk = withWall(tk, Math.max(mode === 'light' ? 62 : 42, wallPct));
   for (const k in tk) stage.style.setProperty('--color-' + k + '-value', tk[k]);
   document.getElementById('curName').textContent = p.name + ' · ' + p.en;
   document.getElementById('curMode').textContent = mode === 'dark' ? '深色' : '浅色';
