@@ -1,31 +1,65 @@
 # accio-skin
 
-给 [Accio Work](https://www.accio.com/work)（Electron 桌面端）换肤的外部工具：**不改安装包**，通过调试协议把一份样式表注入渲染进程，覆盖它的设计 token。
+**给 Accio Work 桌面端换一张脸。** 8 套成品主题、自定义强调色、渐变或图片壁纸、能发给别人的主题包 —— 不改安装包、不碰业务逻辑，不想用了点一下就还原成官方外观。
 
-8 套预设 · 强调色 · 壁纸 · 主题包可分享 · 托盘常驻 · 一键还原官方外观。
+![platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?style=flat-square)
+![node](https://img.shields.io/badge/Node.js-%E2%89%A522-339933?style=flat-square)
+![deps](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)
+![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
 ![星云紫主题](docs/theme-nebula.png)
 
-<sub>星云紫 · 深色。截图由项目内的 `preview.html` 用同一套 token 渲染，内容为示例数据（不含任何真实账号或业务信息）。</sub>
+<sub>星云紫 · 深色。截图由项目内的 `preview.html` 用同一套 token 渲染，内容为示例数据。</sub>
 
----
+## 它解决什么问题
+
+Accio Work 只给了明暗两套内置配色，没有主题商店，插件系统也不开放 UI 扩展点。这个项目从外部把配色接管过来：
+
+- **8 套开箱预设** —— 沉静蓝 / 极光青 / 星云紫 / 余烬橙 / 午夜黑 / 极简白 / 干净明亮 / 材质粉，每套都调了浅色和深色两版
+- **强调色随便换** —— 12 个色板 + 随机，主色一换，按钮、选中态、徽章一起跟着重算
+- **壁纸** —— 渐变预设、图片 URL、本地图片都行，配浓度和模糊滑杆
+- **主题包能分享** —— 导出 `.json` 或复制到剪贴板，别人导入即用
+- **打开就是皮肤** —— 托盘常驻，你从哪儿打开 Accio 它都能接上（可开机自启）
+- **随时还原** —— 面板里一个按钮，回到 Accio 原样
+
+## 快速开始
+
+需要 **Node.js 22+** 和 **Accio Work**（在 0.34.4 上验证）。
+
+```bash
+git clone https://github.com/Rich4ever-zhong/accio-skin.git
+cd accio-skin
+```
+
+然后**双击 `setup.cmd`**。它会做两件事，都可以撤销：
+
+1. 在「启动」文件夹放一个快捷方式 → 登录 Windows 后托盘静默常驻（无窗口），平时待命
+2. 问你要不要给 Accio 的快捷方式加 `--remote-debugging-port=9222` → 以后点原图标启动就带端口，托盘直接附着，**不会重启你的 Accio**
+
+之后打开 Accio，皮肤自动出现；右下角圆点是控制面板。
+
+### 三种启动方式
+
+| 方式 | 怎么做 | 适合 |
+|---|---|---|
+| 托盘常驻（推荐） | 双击一次 `setup.cmd` | 日常使用，打开即有皮肤 |
+| 单次带皮肤启动 | 双击 `start-skin.cmd` | 不想留常驻进程 |
+| 手动 | `node injector.mjs` | 调试或接进自己的脚本 |
+
+## 先看看长什么样
+
+不想装也行：浏览器直接打开 `preview.html`，8 套 × 明暗都能点。它和注入器用的是同一份 token 生成逻辑。
+
+```
+preview.html?theme=nebula&mode=dark            # 指定预设与明暗
+preview.html?theme=aurora&wall=40              # 叠一层壁纸
+preview.html?theme=nebula&mode=dark&panel=1    # 带控制面板
+preview.html?shot=1                            # 纯界面，适合截图
+```
 
 ## 为什么不是「插件」
 
-Accio 的插件系统（Phoenix，`plugin.json`）只认 Skill / SubAgent / Connector / CLI 四类组件，**没有 UI 或主题扩展点**。
-所以这个项目不做成插件，而是一个在外部运行、通过 Chrome DevTools Protocol 给渲染进程注样式的注入器。
-
-## 工作原理
-
-Accio 的配色是**两层 + 混合**的，只改一层会「换一半」：
-
-| 层 | 内容 | 处理方式 |
-|---|---|---|
-| 第一层 | `:root` 里 49 个颜色 token（`--color-*-value`，另有 5 个非颜色变量），`.dark` 同名覆盖 | 直接重写 |
-| 第二层 | Tailwind `@theme` 把 `--color-primary: var(--color-primary-value)` 派生出去；但 `html.dark` 里有 22 条是**硬编码 oklch** | 派生层一并重写 |
-| 第三层 | 另有一批表面直接用 Tailwind 调色板类（`bg-zinc-800/60`、`bg-zinc-900`），不读语义 token | 把 `--color-zinc / neutral / slate / gray / stone` 的 50–950 色阶整体映射到当前主题 |
-
-注入的 `<style>` 采用「后追加、同权重」取胜，因此不需要 `!important`，也不会破坏组件自身样式。
+Accio 的插件系统（Phoenix，`plugin.json`）只认 Skill / SubAgent / Connector / CLI 四类组件，**没有 UI 或主题扩展点**。所以这个项目不做成插件，而是在外部运行，通过 Chrome DevTools Protocol 给渲染进程注入样式。
 
 ```
 托盘（可选，PowerShell 常驻）
@@ -34,32 +68,19 @@ Accio 的配色是**两层 + 混合**的，只改一层会「换一半」：
              └─ 页面内：<style> + 悬浮面板（Shadow DOM）
 ```
 
-## 环境要求
+### 为什么必须「两层 + 色阶」一起改
 
-- Windows 10 / 11（托盘与启动脚本是 Windows 专用；核心 `injector.mjs` 是跨平台的）
-- **Node.js 22+**（用到 Node 21 起的内置 `WebSocket`）
-- Accio Work —— 在 **0.34.4** 上验证通过
+Accio 的配色是混合的，只改一层会「换一半」。这是踩出来的：
 
-> 没装 Node？托盘会弹框让你手动指定 `node.exe`，或直接打开 nodejs.org。选过的路径记在 `.nodepath`（不入库）。
-
-## 快速开始
-
-**推荐：双击 `setup.cmd`**（做两件事，都可撤销）
-
-1. 在「启动」文件夹放一个快捷方式 → 登录 Windows 后托盘静默常驻，平时待命
-2. 询问是否给 Accio 的快捷方式追加 `--remote-debugging-port=9222` → 以后点原图标启动即带端口，托盘**直接附着、不重启你的 Accio**
-
-之后：打开 Accio，皮肤自动出现。右下角圆点是控制面板。
-
-### 三种启动方式对比
-
-| 方式 | 命令 | 适合 |
+| 层 | 内容 | 处理 |
 |---|---|---|
-| 托盘常驻（推荐） | 双击 `setup.cmd` 一次 | 日常使用，打开即有皮肤 |
-| 单次带皮肤启动 | 双击 `start-skin.cmd` | 不想留常驻进程 |
-| 手动/自检 | `node injector.mjs` | 调试或接进自己的脚本 |
+| 第一层 | `:root` 里 49 个颜色 token（`--color-*-value`，另有 5 个非颜色变量），`.dark` 同名覆盖 | 直接重写 |
+| 第二层 | Tailwind `@theme` 把 `--color-primary: var(--color-primary-value)` 派生出去；但 `html.dark` 里有 22 条是**硬编码 oklch** | 派生层一并重写 |
+| 第三层 | 另有一批表面直接用调色板类（`bg-zinc-800/60`、`bg-zinc-900`），不读语义 token | 把 `--color-zinc / neutral / slate / gray / stone` 的 50–950 色阶映射到当前主题 |
 
-### 命令行参数
+注入的 `<style>` 靠「后追加、同权重」取胜，所以不需要 `!important`，也不破坏组件自身样式。
+
+## 命令行
 
 ```bash
 node injector.mjs                     # 默认皮肤，自动探测并启动 Accio
@@ -73,7 +94,7 @@ node injector.mjs --exe="C:\path\Accio.exe"
 node injector.mjs --log=%TEMP%\a.log  # 同时写日志文件
 ```
 
-### 托盘菜单
+## 托盘菜单
 
 | 菜单项 | 作用 |
 |---|---|
@@ -86,7 +107,7 @@ node injector.mjs --log=%TEMP%\a.log  # 同时写日志文件
 
 ## 主题包
 
-面板「包」页可以**导出到剪贴板 / 下载 json / 从剪贴板导入**。格式：
+面板「包」页可以**导出到剪贴板 / 下载 json / 从剪贴板导入**：
 
 ```json
 {
@@ -106,11 +127,11 @@ node injector.mjs --log=%TEMP%\a.log  # 同时写日志文件
 
 ### 加一套自己的
 
-1. 在 `build-themes.mjs` 的 `PRESETS` 里加一项（只需 10 个锚点色：`bg / layout / container / surface / text / text2 / border / primary / pfg / accent`）
-2. `npm run themes` —— 会重新生成 `themes/*.json`，并打印 **WCAG 对比度自检**
+1. 在 `build-themes.mjs` 的 `PRESETS` 里加一项 —— 只需要 10 个锚点色：`bg / layout / container / surface / text / text2 / border / primary / pfg / accent`
+2. `npm run themes` —— 重新生成 `themes/*.json`，并打印 **WCAG 对比度自检**
 3. 重启注入器
 
-预设的 16 组正文对比度目前全部 ≥ 4.5（AA）。
+现有 8 套 × 明暗共 16 组正文对比度全部 ≥ 4.5（AA）。
 
 ## 截图
 
@@ -122,43 +143,29 @@ node injector.mjs --log=%TEMP%\a.log  # 同时写日志文件
 |---|---|
 | ![light](docs/theme-light.png) | ![wallpaper](docs/theme-wallpaper.png) |
 
-控制面板（右下角圆点展开）：
+控制面板：
 
 ![panel](docs/panel.png)
 
-## 预览页
-
-不想装就先看效果：浏览器直接打开 `preview.html`，8 套预设 × 明暗都能点。它和注入器用的是同一份 token 生成逻辑。
-
-URL 参数（可用于截图或分享某个组合）：
-
-```
-preview.html?theme=nebula&mode=dark            # 指定预设与明暗
-preview.html?theme=aurora&wall=40              # 叠一层壁纸
-preview.html?theme=nebula&mode=dark&panel=1    # 带面板
-preview.html?shot=1                            # 纯界面（隐藏挑色台外壳），适合截图
-```
-
-`docs/` 里的截图就是 `node tools/shoot-docs.mjs` 用无头 Edge/Chrome 跑这些参数生成的。
-
+`docs/` 里的图都是 `npm run docs` 用无头 Edge/Chrome 跑 `preview.html` 生成的，随时可以重出。
 
 ## 已知限制
 
 - **标题栏换不了**：Electron 的 `titleBarOverlay` 在主进程，渲染层 CSS 管不到
-- **必须带调试端口**：直连打开 Accio 是没有端口的，所以要么从托盘/脚本启动，要么让托盘「接管」（会重启一次 Accio）。会话有持久化，重启一般不丢内容
-- **注入器退出后样式保留**：到 Accio 重启为止。想立即还原，用面板/托盘里的「还原官方外观」
-- **版本敏感**：Accio 升级可能改动 token 名或色阶用法。若某块颜色没被覆盖，请带上版本号反馈
-- **仅样式**：不修改任何业务逻辑、不改安装包、不碰账号态
+- **必须带调试端口**：直接打开 Accio 是没有端口的，所以要靠托盘/脚本启动，或让托盘「接管」（会重启一次 Accio，会话有持久化一般不丢）
+- **注入器退出后样式保留**：直到 Accio 重启。想立刻还原，用面板或托盘里的「还原官方外观」
+- **版本敏感**：Accio 升级可能改 token 名或色阶用法。某块颜色没被覆盖时，带上版本号反馈
+- **仅样式**：不改业务逻辑、不改安装包、不碰账号态
 
 ## 安全与隐私
 
-- 注入内容只有：一个 `<style>`、一个 Shadow DOM 面板、以及 `localStorage` 里的一条主题状态
-- 本地控制通道 `127.0.0.1:9770` 只做切皮肤/开关面板/还原，**没有执行命令类接口**，且只绑本机
-- 带 `--remote-debugging-port` 意味着本机任意进程都能连 9222 控制该渲染进程 —— 这是调试口的固有性质，别在不受控的机器上长期开着
+- 注入内容只有：一个 `<style>`、一个 Shadow DOM 面板、`localStorage` 里一条主题状态
+- 本地控制通道 `127.0.0.1:9770` 只做切皮肤 / 开关面板 / 还原，**没有执行命令类接口**，且只绑本机
+- 带 `--remote-debugging-port` 意味着本机任意进程都能连 9222 控制该渲染进程 —— 调试口的固有性质，别在不受控的机器上长期开着
 
 ## 免责声明
 
-非官方项目，与 Accio / 阿里巴巴无关。它不修改安装包，但通过调试协议注入样式，是否适用于你的使用场景请自行判断；升级后失效、或被认为违反服务条款的风险由使用者承担。
+非官方项目，与 Accio / 阿里巴巴无关。它不修改安装包，但通过调试协议注入样式；是否适用于你的场景请自行判断，升级后失效或被认为违反服务条款的风险由使用者承担。
 
 ## 目录
 
